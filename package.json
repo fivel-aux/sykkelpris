@@ -1,0 +1,42 @@
+{
+  "name": "sykkelpris",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
+    "db:generate": "prisma generate",
+    "db:setup": "prisma db push && ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
+    "ingest": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/run-ingestion.ts"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.14.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.395.0",
+    "next": "^14.2.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "cheerio": "^1.0.0-rc.12",
+    "playwright": "^1.44.1",
+    "prisma": "^5.14.0",
+    "tailwindcss": "^3.4.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.39"
+  }
+}

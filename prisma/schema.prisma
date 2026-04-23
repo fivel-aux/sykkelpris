@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum BikeCategory {
+  ROAD
+  GRAVEL
+  MTB
+  EBIKE
+  TT
+}
+
+enum FrameMaterial {
+  CARBON
+  ALUMINUM
+  STEEL
+  TITANIUM
+  UNKNOWN
+}
+
+enum Gender {
+  MENS
+  WOMENS
+  UNISEX
+}
+
+enum ScrapeJobStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+model Store {
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  name           String
+  url            String
+  logoUrl        String?
+  shipsToNorway  Boolean   @default(true)
+  isActive       Boolean   @default(true)
+  /// JSON config for the scraper: { type: "playwright"|"cheerio"|"api", baseUrl, selectors, paginationPattern }
+  scrapingConfig Json?
+  lastScrapedAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  listings   BikeListing[]
+  scrapeJobs ScrapeJob[]
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  logoUrl   String?
+  createdAt DateTime @default(now())
+
+  listings   BikeListingBrand[]
+  bikeModels BikeModel[]
+}
+
+/// Canonical normalized bike model — optional in V1, used for deduplication across stores
+model BikeModel {
+  id            String        @id @default(cuid())
+  brandId       String
+  brand         Brand         @relation(fields: [brandId], references: [id])
+  name          String
+  slug          String        @unique
+  category      BikeCategory
+  frameMaterial FrameMaterial @default(UNKNOWN)
+  isElectric    Boolean       @default(false)
+  description   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  listings BikeListing[]
+
+  @@index([brandId])
+  @@index([category])
+}
+
+model BikeListing {
+  id          String  @id @default(cuid())
+  storeId     String
+  store       Store   @relation(fields: [storeId], references: [id])
+  bikeModelId String?
+  bikeModel   BikeModel? @relation(fields: [bikeModelId], references: [id])
+
+  /// The store's own product identifier (SKU, slug, or numeric ID)
+  externalId  String
+  externalUrl String
+
+  /// Raw title as scraped from the store — preserved for debugging and re-normalization
+  rawTitle    String
+
+  // Normalized fields
+  modelName     String
+  category      BikeCategory
+  frameMaterial FrameMaterial @default(UNKNOWN)
+  gender        Gender        @default(UNISEX)
+  isElectric    Boolean       @default(false)
+
+  // Pricing — stored as NUMERIC(12,2) in NOK, never floats
+  originalPrice   Decimal @db.Decimal(12, 2)
+  discountedPrice Decimal @db.Decimal(12, 2)
+  discountPercent Int     // 0–100, stored for fast filtering/sorting
+
+  currency String @default("NOK")
+
+  // Images
+  imageUrls       String[]
+  primaryImageUrl String?
+
+  // Content
+  description    String?
+  specifications Json?    // flexible { "Vekt": "8.2 kg", "Gir": "Shimano 105" }
+
+  // Availability
+  isInStock Boolean @default(true)
+
+  // Lifecycle
+  isActive          Boolean   @default(true)
+  firstSeenAt       DateTime  @default(now())
+  lastSeenAt        DateTime
+  lastPriceChangeAt DateTime?
+
+  // Data quality
+  confidenceScore Float    @default(0) // 0–1
+  missingFields   String[] // names of fields that could not be extracted
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sizes          BikeListingSize[]
+  priceSnapshots PriceSnapshot[]
+  brands         BikeListingBrand[]
+
+  @@unique([storeId, externalId])
+  @@index([storeId])
+  @@index([category])
+  @@index([discountPercent(sort: Desc)])
+  @@index([discountedPrice])
+  @@index([isActive, isInStock])
+  @@index([lastSeenAt(sort: Desc)])
+}
+
+/// Many-to-many: a listing can have one or more brands (e.g. "Trek / Bontrager")
+model BikeListingBrand {
+  listingId String
+  brandId   String
+  listing   BikeListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  brand     Brand       @relation(fields: [brandId], references: [id])
+  isPrimary Boolean     @default(true)
+
+  @@id([listingId, brandId])
+}
+
+model BikeListingSize {
+  id        String      @id @default(cuid())
+  listingId String
+  listing   BikeListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  size      String   // "XS", "S", "M", "L", "XL", "XXL", "52", "54", "56" etc.
+  isInStock Boolean  @default(true)
+  quantity  Int?
+
+  @@unique([listingId, size])
+  @@index([listingId])
+}
+
+model PriceSnapshot {
+  id              String      @id @default(cuid())
+  listingId       String
+  listing         BikeListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  originalPrice   Decimal     @db.Decimal(12, 2)
+  discountedPrice Decimal     @db.Decimal(12, 2)
+  discountPercent Int
+  recordedAt      DateTime    @default(now())
+
+  @@index([listingId, recordedAt(sort: Desc)])
+}
+
+model ScrapeJob {
+  id           String          @id @default(cuid())
+  storeId      String
+  store        Store           @relation(fields: [storeId], references: [id])
+  status       ScrapeJobStatus @default(RUNNING)
+  startedAt    DateTime        @default(now())
+  completedAt  DateTime?
+  itemsFound   Int?
+  itemsNew     Int?
+  itemsUpdated Int?
+  itemsFailed  Int?
+  errorLog     Json?
+
+  @@index([storeId, startedAt(sort: Desc)])
+}
