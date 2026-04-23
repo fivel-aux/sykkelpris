@@ -32,6 +32,7 @@ interface StoreStats {
   updatedCount: number;
   skippedCount: number;
   failedCount: number;
+  inactiveCount: number;
 }
 
 interface RunSummary {
@@ -106,6 +107,7 @@ export async function runIngestion(targetStoreSlug?: string): Promise<RunSummary
       summary.totalUpdated += storeStats.updatedCount;
       summary.totalSkipped += storeStats.skippedCount;
       summary.totalFailed += storeStats.failedCount;
+      summary.totalInactive += storeStats.inactiveCount;
     } catch (err) {
       // Per-store errors are isolated — log and continue with the next store.
       // The ScrapeJob record is already marked FAILED by BaseScraper.
@@ -149,6 +151,7 @@ async function ingestStore(
     updatedCount: 0,
     skippedCount: 0,
     failedCount: 0,
+    inactiveCount: 0,
   };
 
   for (const raw of rawProducts) {
@@ -193,17 +196,22 @@ async function ingestStore(
   }
 
   // Step 5: Mark listings not seen in this run as inactive
-  const inactiveCount = await markStaleListings(store.id, jobStart);
+  stats.inactiveCount = await markStaleListings(store.id, jobStart);
+  const inactiveCount = stats.inactiveCount;
 
   // Step 6: Write per-item stats back to the ScrapeJob record.
   // BaseScraper already set status=SUCCESS and itemsFound=rawProducts.length.
   // We now update with post-ingestion counts and potentially downgrade to PARTIAL.
   if (scraper.jobId) {
+    const upserted = stats.newCount + stats.updatedCount;
     const finalStatus =
-      stats.failedCount > 0 &&
-      stats.newCount + stats.updatedCount > 0
+      stats.failedCount > 0 && upserted > 0
+        ? ScrapeJobStatus.PARTIAL
+        : upserted === 0
         ? ScrapeJobStatus.PARTIAL
         : ScrapeJobStatus.SUCCESS;
+
+    const jobDurationMs = Date.now() - jobStart.getTime();
 
     await db.scrapeJob.update({
       where: { id: scraper.jobId },
@@ -213,6 +221,8 @@ async function ingestStore(
         itemsNew: stats.newCount,
         itemsUpdated: stats.updatedCount,
         itemsFailed: stats.failedCount + stats.skippedCount,
+        itemsInactive: inactiveCount,
+        durationMs: jobDurationMs,
       },
     });
   }

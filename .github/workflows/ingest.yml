@@ -38,15 +38,24 @@ jobs:
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Run ingestion
+        id: ingest
         run: |
           STORE="${{ github.event.inputs.store }}"
           if [ -n "$STORE" ]; then
             echo "Running ingestion for store: $STORE"
-            npm run ingest -- "$STORE"
+            npm run ingest -- "$STORE" | tee /tmp/ingest.log
           else
             echo "Running ingestion for all active stores"
-            npm run ingest
+            npm run ingest | tee /tmp/ingest.log
           fi
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Write step summary
+        if: always()
+        run: |
+          echo "## Ingestion summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -30 /tmp/ingest.log >> $GITHUB_STEP_SUMMARY || echo "(no log output)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

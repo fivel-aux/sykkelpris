@@ -193,11 +193,13 @@ model ScrapeJob {
   status       ScrapeJobStatus @default(RUNNING)
   startedAt    DateTime        @default(now())
   completedAt  DateTime?
-  itemsFound   Int?
-  itemsNew     Int?
-  itemsUpdated Int?
-  itemsFailed  Int?
-  errorLog     Json?
+  itemsFound    Int?
+  itemsNew      Int?
+  itemsUpdated  Int?
+  itemsFailed   Int?
+  itemsInactive Int?
+  durationMs    Int?
+  errorLog      Json?
 
   @@index([storeId, startedAt(sort: Desc)])
 }
