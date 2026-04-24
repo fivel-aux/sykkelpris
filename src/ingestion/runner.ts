@@ -1,12 +1,8 @@
 import { db } from "../lib/db";
 import { ScrapeJobStatus } from "@prisma/client";
 import type { Store } from "@prisma/client";
-import { XXLScraper } from "./scrapers/stores/XXLScraper";
-import { BikesterScraper } from "./scrapers/stores/BikesterScraper";
-import { StifScraper } from "./scrapers/stores/StifScraper";
 import { CanyonScraper } from "./scrapers/stores/CanyonScraper";
 import { normalize } from "./normalizer";
-import type { NormalizedListing } from "./normalizer";
 import { validateListing } from "./validator/listing";
 import type { ValidatedListing } from "./validator/listing";
 import type { BaseScraper } from "./scrapers/BaseScraper";
@@ -19,9 +15,6 @@ import { MIN_CONFIDENCE_SCORE } from "./config";
  * Add new stores here as they are onboarded — no other file needs to change.
  */
 const SCRAPERS: Record<string, new (store: Store) => BaseScraper> = {
-  xxl: XXLScraper,
-  bikester: BikesterScraper,
-  stif: StifScraper,
   canyon: CanyonScraper,
 };
 

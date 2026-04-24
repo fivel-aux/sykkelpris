@@ -20,15 +20,21 @@ async function main() {
   for (const s of STORE_DATA) {
     const store = await db.store.upsert({
       where: { slug: s.slug },
-      update: { name: s.name, url: s.url, shipsToNorway: s.shipsToNorway },
+      update: {
+        name: s.name,
+        url: s.url,
+        shipsToNorway: s.shipsToNorway,
+        isActive: s.isActive,
+        scrapingConfig: s.scrapingConfig as object ?? undefined,
+      },
       create: {
         slug: s.slug,
         name: s.name,
         url: s.url,
         logoUrl: s.logoUrl ?? null,
         shipsToNorway: s.shipsToNorway,
-        isActive: true,
-        scrapingConfig: s.scrapingConfig as object,
+        isActive: s.isActive,
+        scrapingConfig: s.scrapingConfig as object ?? undefined,
       },
     });
     storeMap.set(s.slug, store.id);
