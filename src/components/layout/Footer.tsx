@@ -22,7 +22,7 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 mb-3">Kategorier</h3>
             <ul className="space-y-2 text-sm text-zinc-500">
-              <li><Link href="/sykler?category=ROAD" className="hover:text-zinc-900">Veisykler</Link></li>
+              <li><Link href="/sykler?category=ROAD" className="hover:text-zinc-900">Landeveissykler</Link></li>
               <li><Link href="/sykler?category=GRAVEL" className="hover:text-zinc-900">Grusykler</Link></li>
               <li><Link href="/sykler?category=MTB" className="hover:text-zinc-900">Terrengsykler</Link></li>
               <li><Link href="/sykler?category=EBIKE" className="hover:text-zinc-900">Elsykler</Link></li>

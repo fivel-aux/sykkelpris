@@ -31,6 +31,14 @@ export interface RawProduct {
   rawGender?: string | null;
   /** Whether the product is listed as in stock (if known) */
   isInStock?: boolean;
+  /**
+   * Whether the size data for this product is reliable.
+   * Set to false by scrapers that fetch a separate detail page when that
+   * fetch fails (e.g. 429 / timeout). The runner uses this to decide
+   * whether to update stored sizes and isInStock, or preserve existing DB data.
+   * Defaults to true (undefined treated as true).
+   */
+  sizesConfident?: boolean;
   /** Timestamp when this product was scraped */
   scrapedAt: Date;
 }

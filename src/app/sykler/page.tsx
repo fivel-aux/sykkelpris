@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Search, LayoutGrid, List } from "lucide-react";
+import { Search, LayoutGrid, Columns2, List } from "lucide-react";
 import Link from "next/link";
 import { clsx } from "clsx";
 
@@ -12,7 +12,7 @@ import { ActiveFilters } from "@/components/filters/ActiveFilters";
 import { MobileFilterSheet } from "@/components/filters/MobileFilterSheet";
 import { SortSelect } from "@/components/filters/SortSelect";
 import { SearchBar } from "@/components/ui/SearchBar";
-import { getListings, getFilterOptions } from "@/lib/queries";
+import { getListings, getDynamicFilterOptions } from "@/lib/queries";
 import { parseFiltersFromSearchParams } from "@/lib/search";
 import { CATEGORY_LABELS } from "@/lib/constants";
 
@@ -33,11 +33,13 @@ export default async function SyklerPage({ searchParams }: PageProps) {
   }
 
   const filters = parseFiltersFromSearchParams(params);
-  const view = (searchParams.view as string) === "list" ? "list" : "grid";
+  const rawView = searchParams.view as string | undefined;
+  const view: "grid" | "grid2" | "list" =
+    rawView === "list" ? "list" : rawView === "grid2" ? "grid2" : "grid";
 
   const [{ listings, total, page, totalPages }, filterOptions] = await Promise.all([
     getListings(filters),
-    getFilterOptions(),
+    getDynamicFilterOptions(filters),
   ]);
 
   // Page title reflects the active context
@@ -48,6 +50,10 @@ export default async function SyklerPage({ searchParams }: PageProps) {
     ? `Søk: «${filters.q}»`
     : "Alle sykler";
 
+  // The full listing URL — passed to each card so the detail page can navigate back here
+  const listingQs = params.toString();
+  const fromUrl = listingQs ? `/sykler?${listingQs}` : "/sykler";
+
   // Clean URL builders — no inline IIFEs
   function buildPageUrl(p: number) {
     const np = new URLSearchParams(params.toString());
@@ -55,7 +61,7 @@ export default async function SyklerPage({ searchParams }: PageProps) {
     return `/sykler?${np.toString()}`;
   }
 
-  function buildViewUrl(v: "grid" | "list") {
+  function buildViewUrl(v: "grid" | "grid2" | "list") {
     const np = new URLSearchParams(params.toString());
     np.set("view", v);
     np.delete("page");
@@ -90,6 +96,7 @@ export default async function SyklerPage({ searchParams }: PageProps) {
                 <FilterPanel
                   brands={filterOptions.brands}
                   stores={filterOptions.stores}
+                  availableSizes={filterOptions.sizes}
                 />
               </Suspense>
             </div>
@@ -105,6 +112,7 @@ export default async function SyklerPage({ searchParams }: PageProps) {
                   <MobileFilterSheet
                     brands={filterOptions.brands}
                     stores={filterOptions.stores}
+                    availableSizes={filterOptions.sizes}
                   />
                 </Suspense>
 
@@ -113,11 +121,11 @@ export default async function SyklerPage({ searchParams }: PageProps) {
                 </Suspense>
               </div>
 
-              {/* Right side: grid / list toggle */}
+              {/* Right side: grid / grid2 / list toggle */}
               <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-1">
                 <Link
                   href={buildViewUrl("grid")}
-                  aria-label="Rutenett"
+                  aria-label="4-kolonne rutenett"
                   className={clsx(
                     "rounded p-1.5 transition-colors",
                     view === "grid"
@@ -126,6 +134,18 @@ export default async function SyklerPage({ searchParams }: PageProps) {
                   )}
                 >
                   <LayoutGrid className="h-4 w-4" />
+                </Link>
+                <Link
+                  href={buildViewUrl("grid2")}
+                  aria-label="2-kolonne rutenett"
+                  className={clsx(
+                    "rounded p-1.5 transition-colors",
+                    view === "grid2"
+                      ? "bg-zinc-100 text-zinc-900"
+                      : "text-zinc-400 hover:text-zinc-700"
+                  )}
+                >
+                  <Columns2 className="h-4 w-4" />
                 </Link>
                 <Link
                   href={buildViewUrl("list")}
@@ -159,10 +179,16 @@ export default async function SyklerPage({ searchParams }: PageProps) {
                   <BikeListItem key={l.id} listing={l} />
                 ))}
               </div>
+            ) : view === "grid2" ? (
+              <div className="grid grid-cols-2 gap-5">
+                {listings.map((l) => (
+                  <BikeCard key={l.id} listing={l} fromUrl={fromUrl} />
+                ))}
+              </div>
             ) : (
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
                 {listings.map((l) => (
-                  <BikeCard key={l.id} listing={l} />
+                  <BikeCard key={l.id} listing={l} fromUrl={fromUrl} />
                 ))}
               </div>
             )}

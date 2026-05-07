@@ -35,7 +35,7 @@ export const STORE_DATA = [
     url: "https://www.bikester.no",
     logoUrl: null,
     shipsToNorway: true,
-    isActive: false,
+    isActive: true,
     scrapingConfig: { type: "api", baseUrl: "https://www.bikester.no/products.json" },
   },
   {
@@ -46,6 +46,83 @@ export const STORE_DATA = [
     shipsToNorway: true,
     isActive: false,
     scrapingConfig: { type: "cheerio", baseUrl: "https://www.stif.no/sykler" },
+  },
+
+  {
+    slug: "sykkelbutikken",
+    name: "Sykkelbutikken",
+    url: "https://www.sykkelbutikken.no",
+    logoUrl: null,
+    shipsToNorway: true,
+    isActive: true,
+    scrapingConfig: { type: "cheerio", baseUrl: "https://www.sykkelbutikken.no" },
+  },
+
+  {
+    slug: "bikeshop",
+    name: "Bikeshop",
+    url: "https://bikeshop.no",
+    logoUrl: null,
+    shipsToNorway: true,
+    isActive: true,
+    scrapingConfig: { type: "cheerio", baseUrl: "https://bikeshop.no" },
+  },
+  {
+    slug: "birk",
+    name: "Birk Sport",
+    url: "https://www.birk.no",
+    logoUrl: null,
+    shipsToNorway: true,
+    isActive: true,
+    scrapingConfig: { type: "cheerio", baseUrl: "https://www.birk.no" },
+  },
+
+  {
+    slug: "unaas",
+    name: "Unaas Cycling",
+    url: "https://unaascycling.no",
+    logoUrl: null,
+    shipsToNorway: true,
+    isActive: true,
+    scrapingConfig: { type: "api", baseUrl: "https://unaascycling.no/collections" },
+  },
+
+  // ── Pending verification — scrapers written, not yet QA'd ────────────────
+  {
+    slug: "lillehammersport",
+    name: "Lillehammer Sport",
+    url: "https://www.lillehammersport.no",
+    logoUrl: null,
+    shipsToNorway: true,
+    isActive: true,
+    scrapingConfig: { type: "api", baseUrl: "https://www.lillehammersport.no/wp-json/wc/store" },
+  },
+  {
+    slug: "sykkeloutlet",
+    name: "Sykkeloutlet",
+    url: "https://www.sykkeloutlet.no",
+    logoUrl: null,
+    shipsToNorway: true,
+    isActive: true,
+    scrapingConfig: { type: "api", baseUrl: "https://www.sykkeloutlet.no/products.json" },
+  },
+  {
+    slug: "poie",
+    name: "Peder Øie",
+    url: "https://www.poie.no",
+    logoUrl: null,
+    shipsToNorway: true,
+    isActive: true,
+    scrapingConfig: { type: "api", baseUrl: "https://www.poie.no/collections/salg/products.json" },
+  },
+  {
+    slug: "antonsport",
+    name: "Anton Sport",
+    url: "https://www.antonsport.no",
+    logoUrl: null,
+    shipsToNorway: true,
+    isActive: false,
+    scrapingConfig: { type: "cheerio", baseUrl: "https://www.antonsport.no" },
   },
 
   // ── Planned — no scraper yet ───────────────────────────────────────────────

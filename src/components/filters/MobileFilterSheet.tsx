@@ -17,15 +17,15 @@ const FILTER_PARAM_KEYS = [
   "gender",
   "frameMaterial",
   "electric",
-  "inStock",
 ] as const;
 
 interface MobileFilterSheetProps {
   brands: FilterOption[];
   stores: FilterOption[];
+  availableSizes?: string[];
 }
 
-export function MobileFilterSheet({ brands, stores }: MobileFilterSheetProps) {
+export function MobileFilterSheet({ brands, stores, availableSizes = [] }: MobileFilterSheetProps) {
   const [open, setOpen] = useState(false);
   const searchParams = useSearchParams();
 
@@ -80,7 +80,7 @@ export function MobileFilterSheet({ brands, stores }: MobileFilterSheetProps) {
 
             {/* Scrollable filter content */}
             <div className="flex-1 overflow-y-auto px-4 py-5">
-              <FilterPanel brands={brands} stores={stores} />
+              <FilterPanel brands={brands} stores={stores} availableSizes={availableSizes} />
             </div>
 
             {/* Footer */}

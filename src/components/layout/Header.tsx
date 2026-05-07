@@ -19,19 +19,19 @@ export function Header() {
           </Link>
 
           {/* Search bar — hidden on mobile, shown on md+ */}
-          <div className="hidden md:flex flex-1 max-w-xl">
+          <div className="hidden md:flex flex-1">
             <Suspense fallback={null}>
-              <SearchBar placeholder="Søk etter sykkel, merke eller type..." />
+              <SearchBar placeholder="Søk etter sykkel..." />
             </Suspense>
           </div>
 
           {/* Nav */}
-          <nav className="ml-auto flex items-center gap-1">
+          <nav className="flex items-center gap-1">
             <Link
               href="/sykler?category=ROAD"
               className="hidden lg:block px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors"
             >
-              Veisykler
+              Landeveissykler
             </Link>
             <Link
               href="/sykler?category=GRAVEL"
@@ -50,6 +50,12 @@ export function Header() {
               className="hidden lg:block px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors"
             >
               Elsykler
+            </Link>
+            <Link
+              href="/sykler?category=TT"
+              className="hidden lg:block px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors"
+            >
+              TT / Triatlon
             </Link>
             <Link
               href="/sykler"

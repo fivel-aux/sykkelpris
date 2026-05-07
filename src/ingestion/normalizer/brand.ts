@@ -53,6 +53,36 @@ const KNOWN_BRANDS: BrandMatch[] = [
   { name: "Evil", slug: "evil" },
   { name: "Transition", slug: "transition" },
   { name: "Devinci", slug: "devinci" },
+  // Brands common on Bikester.no
+  { name: "Made", slug: "made" },
+  { name: "Fuji", slug: "fuji" },
+  { name: "Liv", slug: "liv" },
+  { name: "Polygon", slug: "polygon" },
+  { name: "Niner", slug: "niner" },
+  { name: "Whyte", slug: "whyte" },
+  { name: "Marin", slug: "marin" },
+  { name: "Ghost", slug: "ghost" },
+  { name: "Raymon", slug: "raymon" },
+  { name: "Nox", slug: "nox" },
+  // Brands common on Sykkelbutikken.no
+  { name: "Kalkhoff", slug: "kalkhoff" },
+  { name: "Hard Rocx", slug: "hard-rocx" },
+  // Brands common on Bikeshop.no
+  { name: "3T", slug: "3t" },
+  { name: "Surly", slug: "surly" },
+  { name: "Gavia", slug: "gavia" },
+  { name: "Fara", slug: "fara" },
+  { name: "Cinelli", slug: "cinelli" },
+  { name: "Mondraker", slug: "mondraker" },
+  // Brands common on Birk.no
+  { name: "BH", slug: "bh" },
+  { name: "Rondo", slug: "rondo" },
+  { name: "Principia", slug: "principia" },
+  { name: "Kross", slug: "kross" },
+  { name: "GT", slug: "gt" },
+  { name: "NS Bikes", slug: "ns-bikes" },
+  { name: "Tunturi", slug: "tunturi" },
+  { name: "Skeppshult", slug: "skeppshult" },
 ];
 
 const BRAND_ALIASES: Record<string, string> = {
@@ -113,5 +143,7 @@ export function matchBrand(rawBrand: string | null | undefined): BrandMatch | nu
  * Simple heuristic: check if the title starts with a known brand name.
  */
 export function extractBrandFromTitle(title: string): BrandMatch | null {
-  return matchBrand(title.split(" ")[0]) ?? null;
+  // Try full title first — matchBrand does startsWith/contains checks that
+  // handle multi-word brands like "Hard Rocx" from "Hard Rocx Stone Machine 29"
+  return matchBrand(title) ?? matchBrand(title.split(" ")[0]) ?? null;
 }

@@ -2,6 +2,14 @@ import { db } from "../lib/db";
 import { ScrapeJobStatus } from "@prisma/client";
 import type { Store } from "@prisma/client";
 import { CanyonScraper } from "./scrapers/stores/CanyonScraper";
+import { BikesterScraper } from "./scrapers/stores/BikesterScraper";
+import { SykkelbutikkenScraper } from "./scrapers/stores/SykkelbutikkenScraper";
+import { BirkScraper } from "./scrapers/stores/BirkScraper";
+import { BikeshopScraper } from "./scrapers/stores/BikeshopScraper";
+import { UnaaScraper } from "./scrapers/stores/UnaaScraper";
+import { LillehammersportScraper } from "./scrapers/stores/LillehammersportScraper";
+import { PoieScraper } from "./scrapers/stores/PoieScraper";
+import { SykkeloutletScraper } from "./scrapers/stores/SykkeloutletScraper";
 import { normalize } from "./normalizer";
 import { validateListing } from "./validator/listing";
 import type { ValidatedListing } from "./validator/listing";
@@ -16,6 +24,14 @@ import { MIN_CONFIDENCE_SCORE } from "./config";
  */
 const SCRAPERS: Record<string, new (store: Store) => BaseScraper> = {
   canyon: CanyonScraper,
+  bikester: BikesterScraper,
+  sykkelbutikken: SykkelbutikkenScraper,
+  birk: BirkScraper,
+  bikeshop: BikeshopScraper,
+  unaas: UnaaScraper,
+  lillehammersport: LillehammersportScraper,
+  poie: PoieScraper,
+  sykkeloutlet: SykkeloutletScraper,
 };
 
 // ── Stats types ────────────────────────────────────────────────────────────────
@@ -62,8 +78,11 @@ export async function runIngestion(targetStoreSlug?: string): Promise<RunSummary
 
   const stores = await db.store.findMany({
     where: {
-      isActive: true,
-      ...(targetStoreSlug ? { slug: targetStoreSlug } : {}),
+      // When targeting a specific store by slug, skip the isActive gate so
+      // inactive stores can be tested locally without being activated publicly.
+      // The automated cron job never passes a slug, so isActive still controls
+      // which stores run in production.
+      ...(targetStoreSlug ? { slug: targetStoreSlug } : { isActive: true }),
     },
   });
 
@@ -165,6 +184,17 @@ async function ingestStore(
         continue;
       }
 
+      // Extract sizesConfident before validation — the Zod schema doesn't include
+      // it, so it would be stripped. The runner passes it alongside the validated
+      // listing so the upsert can decide whether to refresh sizes and isInStock.
+      const sizesConfident = normalized.sizesConfident;
+
+      if (!normalized.isInStock && normalized.sizes.length > 0) {
+        console.log(
+          `[${store.slug}] "${normalized.rawTitle}": all sizes out of stock — listing will be catalog-excluded`
+        );
+      }
+
       // Step 3: Validate with Zod
       const validated = validateListing(normalized);
       if (!validated) {
@@ -173,7 +203,7 @@ async function ingestStore(
       }
 
       // Step 4: Upsert
-      const isNew = await upsertListing(store.id, validated);
+      const isNew = await upsertListing(store.id, store.slug, validated, sizesConfident);
       if (isNew) {
         stats.newCount++;
       } else {
@@ -241,7 +271,9 @@ async function ingestStore(
  */
 async function upsertListing(
   storeId: string,
-  listing: ValidatedListing
+  storeSlug: string,
+  listing: ValidatedListing,
+  sizesConfident: boolean
 ): Promise<boolean> {
   const now = new Date();
 
@@ -260,6 +292,7 @@ async function upsertListing(
     where: { storeId_externalId: { storeId, externalId: listing.externalId } },
     select: {
       id: true,
+      isInStock: true,
       originalPrice: true,
       discountedPrice: true,
       brands: { where: { isPrimary: true }, select: { brandId: true } },
@@ -324,6 +357,12 @@ async function upsertListing(
     Math.abs(prevDiscounted - listing.discountedPrice) > 0.01 ||
     Math.abs(prevOriginal - listing.originalPrice) > 0.01;
 
+  // Sizes and isInStock are co-dependent for scrapers with separate detail-page
+  // fetches. Only refresh both when the fetch succeeded AND parse returned sizes.
+  // When sizesConfident is false (fetch failed) or sizes is empty (parse gave
+  // nothing), preserve whatever is already in the DB to avoid data corruption.
+  const shouldRefreshSizes = sizesConfident && listing.sizes.length > 0;
+
   await db.bikeListing.update({
     where: { id: existing.id },
     data: {
@@ -336,7 +375,7 @@ async function upsertListing(
       imageUrls: listing.imageUrls,
       description: listing.description,
       specifications: listing.specifications ?? undefined,
-      isInStock: listing.isInStock,
+      isInStock: shouldRefreshSizes ? listing.isInStock : existing.isInStock,
       isActive: true,
       lastSeenAt: now,
       confidenceScore: listing.confidenceScore,
@@ -345,16 +384,20 @@ async function upsertListing(
     },
   });
 
-  // Refresh sizes (delete-and-recreate is simpler than diffing)
-  await db.bikeListingSize.deleteMany({ where: { listingId: existing.id } });
-  await db.bikeListingSize.createMany({
-    data: listing.sizes.map((s) => ({
-      listingId: existing.id,
-      size: s.size,
-      isInStock: s.isInStock,
-      quantity: s.quantity ?? null,
-    })),
-  });
+  if (shouldRefreshSizes) {
+    await db.bikeListingSize.deleteMany({ where: { listingId: existing.id } });
+    await db.bikeListingSize.createMany({
+      data: listing.sizes.map((s) => ({
+        listingId: existing.id,
+        size: s.size,
+        isInStock: s.isInStock,
+        quantity: s.quantity ?? null,
+      })),
+    });
+    console.log(`[${storeSlug}] "${listing.rawTitle}": ${listing.sizes.length} sizes written`);
+  } else if (!sizesConfident) {
+    console.log(`[${storeSlug}] "${listing.rawTitle}": sizes+isInStock preserved (detail fetch failed)`);
+  }
 
   // Refresh brand association if it changed or was previously missing
   if (brandId) {

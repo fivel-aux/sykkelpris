@@ -27,7 +27,8 @@ export function listingEligibility(): Prisma.BikeListingWhereInput {
   const cutoff = new Date(Date.now() - MAX_LISTING_AGE_DAYS * 24 * 60 * 60 * 1000);
   return {
     isActive: true,
-    discountPercent: { gt: 0 },
+    isInStock: true,
+    discountPercent: { gte: 5 },
     primaryImageUrl: { not: null },
     lastSeenAt: { gte: cutoff },
   };

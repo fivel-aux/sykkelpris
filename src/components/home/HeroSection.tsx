@@ -3,6 +3,7 @@ import { Container } from "@/components/layout/Container";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { HeroVideo } from "./HeroVideo";
 
 const QUICK_LINKS = [
   { label: "Carbon veisykler", href: "/sykler?category=ROAD&frameMaterial=CARBON" },
@@ -14,10 +15,16 @@ const QUICK_LINKS = [
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-zinc-900 py-16 md:py-24">
+      {/* Background video — sequential playlist, falls back to bg-zinc-900 if unavailable. */}
+      <HeroVideo />
+
+      {/* Solid dark overlay — keeps text readable regardless of video brightness */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-zinc-900/60" />
+
       {/* Dot grid texture */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        className="pointer-events-none absolute inset-0 opacity-[0.025]"
         style={{
           backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
           backgroundSize: "28px 28px",
@@ -26,7 +33,7 @@ export function HeroSection() {
       {/* Fade edges */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-zinc-900/60 via-transparent to-zinc-900"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-zinc-900/50 via-transparent to-zinc-900"
       />
 
       <Container className="relative">

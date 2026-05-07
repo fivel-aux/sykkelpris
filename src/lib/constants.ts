@@ -1,7 +1,7 @@
 import type { BikeCategory, FrameMaterial, Gender } from "@prisma/client";
 
 export const CATEGORY_LABELS: Record<BikeCategory, string> = {
-  ROAD: "Veisykkel",
+  ROAD: "Landeveissykkel",
   GRAVEL: "Grusykkel",
   MTB: "Terrengsykkel",
   EBIKE: "Elsykkel",

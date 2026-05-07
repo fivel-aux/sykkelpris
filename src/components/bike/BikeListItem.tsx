@@ -6,13 +6,16 @@ import { Badge } from "@/components/ui/Badge";
 import { formatPrice } from "@/lib/formatters";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import type { BikeListingDTO } from "@/types/bike";
+import { sortSizeObjects } from "@/lib/sizes";
 
 interface BikeListItemProps {
   listing: BikeListingDTO;
 }
 
 export function BikeListItem({ listing }: BikeListItemProps) {
-  const inStockSizes = listing.sizes.filter((s) => s.isInStock);
+  const sortedSizes = sortSizeObjects(listing.sizes);
+  const inStockSizes = sortedSizes.filter((s) => s.isInStock);
+  const sizeStockKnown = listing.store.slug !== "bikester";
 
   return (
     <Link
@@ -73,9 +76,9 @@ export function BikeListItem({ listing }: BikeListItemProps) {
 
         {/* Sizes + stock */}
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          {listing.sizes.length > 0 && (
+          {sortedSizes.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {listing.sizes.slice(0, 8).map((s) => (
+              {sortedSizes.slice(0, 8).map((s) => (
                 <span
                   key={s.size}
                   className={clsx(
@@ -91,10 +94,14 @@ export function BikeListItem({ listing }: BikeListItemProps) {
             </div>
           )}
           {listing.isInStock ? (
-            <span className="text-xs font-medium text-green-600">
-              ✓ På lager
-              {inStockSizes.length > 0 ? ` (${inStockSizes.length} str.)` : ""}
-            </span>
+            sizeStockKnown ? (
+              <span className="text-xs font-medium text-green-600">
+                ✓ På lager
+                {inStockSizes.length > 0 ? ` (${inStockSizes.length} str.)` : ""}
+              </span>
+            ) : (
+              <span className="text-xs text-zinc-400">Lagerstatus er ikke bekreftet</span>
+            )
           ) : (
             <span className="text-xs text-zinc-400">Utsolgt</span>
           )}

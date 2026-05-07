@@ -81,9 +81,6 @@ function buildChips(
   if (electric === "false")
     chips.push({ id: "electric-false", key: "electric", label: "Kun vanlige sykler" });
 
-  if (searchParams.get("inStock") === "true")
-    chips.push({ id: "inStock", key: "inStock", label: "På lager" });
-
   return chips;
 }
 

@@ -5,6 +5,10 @@ import { classifyCategory, isElectric } from "./category";
 import { normalizeSizes } from "./size";
 import { MIN_PRICE_NOK, MAX_PRICE_NOK } from "../config";
 
+// Stores where per-size availability is server-rendered and reliable.
+// For these stores, isInStock is derived from sizes when size data exists.
+const RELIABLE_SIZE_STORES = new Set(["unaas", "bikeshop", "canyon", "birk", "sykkelbutikken", "lillehammersport", "poie", "sykkeloutlet"]);
+
 /**
  * A fully normalized listing ready for database upsert.
  */
@@ -29,6 +33,9 @@ export interface NormalizedListing {
   confidenceScore: number;
   brand: { name: string; slug: string } | null;
   sizes: Array<{ size: string; isInStock: boolean; quantity?: number }>;
+  /** Propagated from RawProduct.sizesConfident — false means the detail-page
+   *  fetch failed and sizes/isInStock should NOT overwrite existing DB data. */
+  sizesConfident: boolean;
 }
 
 /**
@@ -119,10 +126,9 @@ export function normalize(
   const missingImportant = missingFields.filter((f) =>
     importantFields.includes(f)
   );
-  const confidenceScore = Math.max(
-    0,
-    1 - missingImportant.length * 0.2 - (discountPercent === 0 ? 0.1 : 0)
-  );
+  // Use integer arithmetic to avoid floating-point drift (e.g. 1 - 3*0.2 = 0.3999...)
+  const penaltyTenths = missingImportant.length * 2 + (discountPercent === 0 ? 1 : 0);
+  const confidenceScore = Math.max(0, (10 - penaltyTenths) / 10);
 
   return {
     externalId: raw.externalId,
@@ -140,11 +146,14 @@ export function normalize(
     imageUrls,
     description: raw.description ?? null,
     specifications: raw.rawSpecs ?? null,
-    isInStock: raw.isInStock ?? sizes.some((s) => s.isInStock),
+    isInStock: (RELIABLE_SIZE_STORES.has(storeSlug) && sizes.length > 0)
+      ? sizes.some((s) => s.isInStock)
+      : (raw.isInStock ?? sizes.some((s) => s.isInStock)),
     missingFields,
     confidenceScore,
     brand,
     sizes,
+    sizesConfident: raw.sizesConfident ?? true,
   };
 }
 

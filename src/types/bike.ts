@@ -155,6 +155,7 @@ export type FilterOption = {
 export type FilterOptionsDTO = {
   brands: FilterOption[];
   stores: FilterOption[];
+  sizes: string[];
 };
 
 /** A single price snapshot — price-history endpoint and detail page. */

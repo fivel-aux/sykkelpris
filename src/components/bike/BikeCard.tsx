@@ -6,13 +6,17 @@ import { Badge } from "@/components/ui/Badge";
 import { formatPrice } from "@/lib/formatters";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import type { BikeListingDTO } from "@/types/bike";
+import { sortSizeObjects } from "@/lib/sizes";
 
 interface BikeCardProps {
   listing: BikeListingDTO;
+  fromUrl?: string;
 }
 
-export function BikeCard({ listing }: BikeCardProps) {
-  const inStockSizes = listing.sizes.filter((s) => s.isInStock);
+export function BikeCard({ listing, fromUrl }: BikeCardProps) {
+  const sortedSizes = sortSizeObjects(listing.sizes);
+  const inStockSizes = sortedSizes.filter((s) => s.isInStock);
+  const sizeStockKnown = listing.store.slug !== "bikester";
   const brandName = listing.primaryBrand?.name ?? "";
 
   // Strip brand prefix from title when brand is already shown above the title
@@ -24,19 +28,23 @@ export function BikeCard({ listing }: BikeCardProps) {
   // Don't repeat the store name when it's the same as the brand (e.g. Canyon DTC)
   const showStore = listing.store.name.toLowerCase() !== brandName.toLowerCase();
 
+  const href = fromUrl
+    ? `/sykler/${listing.id}?from=${encodeURIComponent(fromUrl)}`
+    : `/sykler/${listing.id}`;
+
   return (
     <Link
-      href={`/sykler/${listing.id}`}
+      href={href}
       className="group flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white transition-all duration-150 hover:border-zinc-300 hover:shadow-md"
     >
       {/* Image */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-zinc-100">
+      <div className="relative aspect-[4/3] overflow-hidden bg-white">
         {listing.primaryImageUrl ? (
           <Image
             src={listing.primaryImageUrl}
             alt={listing.modelName}
             fill
-            className="object-contain p-4 transition-transform duration-300 group-hover:scale-[1.04]"
+            className="object-contain p-2 transition-transform duration-300 group-hover:scale-[1.04]"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
@@ -88,9 +96,9 @@ export function BikeCard({ listing }: BikeCardProps) {
         </div>
 
         {/* Sizes */}
-        {listing.sizes.length > 0 && (
+        {sortedSizes.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1">
-            {listing.sizes.slice(0, 6).map((s) => (
+            {sortedSizes.slice(0, 6).map((s) => (
               <span
                 key={s.size}
                 className={clsx(
@@ -103,9 +111,9 @@ export function BikeCard({ listing }: BikeCardProps) {
                 {s.size}
               </span>
             ))}
-            {listing.sizes.length > 6 && (
+            {sortedSizes.length > 6 && (
               <span className="self-center text-xs text-zinc-400">
-                +{listing.sizes.length - 6}
+                +{sortedSizes.length - 6}
               </span>
             )}
           </div>
@@ -114,10 +122,15 @@ export function BikeCard({ listing }: BikeCardProps) {
         {/* Stock status + CTA — pushed to bottom */}
         <div className="mt-auto space-y-2.5 pt-1">
           {listing.isInStock ? (
-            <p className="text-xs font-medium text-green-600">
-              På lager
-              {inStockSizes.length > 0 && ` · ${inStockSizes.length} størrelser`}
-            </p>
+            sizeStockKnown ? (
+              <p className="text-xs font-medium text-green-600">
+                {sortedSizes.length > 0
+                  ? `På lager · ${inStockSizes.length} ${inStockSizes.length === 1 ? "størrelse" : "størrelser"}`
+                  : "På lager"}
+              </p>
+            ) : (
+              <p className="text-xs text-zinc-400">Lagerstatus er ikke bekreftet</p>
+            )
           ) : (
             <p className="text-xs text-zinc-400">Utsolgt</p>
           )}

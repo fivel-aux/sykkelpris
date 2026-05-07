@@ -21,9 +21,11 @@ import {
   GENDER_LABELS,
 } from "@/lib/constants";
 import { clsx } from "clsx";
+import { sortSizeObjects } from "@/lib/sizes";
 
 interface PageProps {
   params: { id: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -36,12 +38,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function BikeDetailPage({ params }: PageProps) {
+export default async function BikeDetailPage({ params, searchParams }: PageProps) {
   const listing = await getListingById(params.id);
   if (!listing) notFound();
 
+  // Restore the listing URL the user came from, if any. Only accept /sykler paths.
+  const rawFrom = typeof searchParams?.from === "string" ? searchParams.from : undefined;
+  const backHref = rawFrom?.startsWith("/sykler") ? rawFrom : "/sykler";
+
   const savings = listing.originalPrice - listing.discountedPrice;
-  const inStockSizes = listing.sizes.filter((s) => s.isInStock);
+  const sortedSizes = sortSizeObjects(listing.sizes);
+  const inStockSizes = sortedSizes.filter((s) => s.isInStock);
+  const sizeStockKnown = listing.store.slug !== "bikester";
 
   // Strip brand prefix from title when brand is shown separately above h1
   const brandName = listing.primaryBrand?.name ?? "";
@@ -96,7 +104,7 @@ export default async function BikeDetailPage({ params }: PageProps) {
 
         {/* ── Back link ───────────────────────────────────────────────────── */}
         <Link
-          href="/sykler"
+          href={backHref}
           className="mb-7 inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-zinc-900"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -183,7 +191,7 @@ export default async function BikeDetailPage({ params }: PageProps) {
                   Størrelser
                 </h2>
                 <div className="flex flex-wrap gap-2">
-                  {listing.sizes.map((s) => (
+                  {sortedSizes.map((s) => (
                     <div
                       key={s.size}
                       className={clsx(
@@ -193,38 +201,46 @@ export default async function BikeDetailPage({ params }: PageProps) {
                           : "border-zinc-200 bg-zinc-50 text-zinc-300"
                       )}
                     >
-                      <span>{s.size}</span>
-                      <span
-                        className={clsx(
-                          "mt-0.5 text-xs",
-                          s.isInStock ? "text-green-600" : "text-zinc-300"
-                        )}
-                      >
-                        {s.isInStock
-                          ? s.quantity != null
-                            ? `${s.quantity} stk`
-                            : "På lager"
-                          : "Utsolgt"}
-                      </span>
+                      <span className={clsx(!s.isInStock && "line-through")}>{s.size}</span>
+                      {sizeStockKnown && (
+                        <span
+                          className={clsx(
+                            "mt-0.5 text-xs",
+                            s.isInStock ? "text-green-600" : "text-zinc-300"
+                          )}
+                        >
+                          {s.isInStock
+                            ? s.quantity != null
+                              ? `${s.quantity} stk`
+                              : "På lager"
+                            : "Utsolgt"}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Stock status */}
-            <div className="mb-5">
-              {listing.isInStock ? (
-                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-700">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  På lager
-                  {inStockSizes.length > 0 &&
-                    ` · ${inStockSizes.length} ${inStockSizes.length === 1 ? "størrelse" : "størrelser"} tilgjengelig`}
-                </span>
-              ) : (
-                <Badge variant="outofstock">Utsolgt</Badge>
-              )}
-            </div>
+            {/* Stock status — hidden for reliable stores when sizes already show availability */}
+            {!(sizeStockKnown && listing.sizes.length > 0 && listing.isInStock) && (
+              <div className="mb-5">
+                {listing.isInStock ? (
+                  sizeStockKnown ? (
+                    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-700">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      På lager
+                    </span>
+                  ) : (
+                    <span className="text-sm text-zinc-400">
+                      Lagerstatus per størrelse er ikke bekreftet
+                    </span>
+                  )
+                ) : (
+                  <Badge variant="outofstock">Utsolgt</Badge>
+                )}
+              </div>
+            )}
 
             {/* Primary CTA */}
             <a

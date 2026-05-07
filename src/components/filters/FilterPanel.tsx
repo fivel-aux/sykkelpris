@@ -1,15 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { X, SlidersHorizontal } from "lucide-react";
 import { clsx } from "clsx";
-import {
-  CATEGORY_LABELS,
-  FRAME_MATERIAL_LABELS,
-  GENDER_LABELS,
-} from "@/lib/constants";
-import type { BikeCategory, FrameMaterial, Gender } from "@prisma/client";
+import { CATEGORY_LABELS } from "@/lib/constants";
+import type { BikeCategory } from "@prisma/client";
 
 export interface FilterOption {
   value: string;
@@ -20,12 +16,14 @@ export interface FilterOption {
 interface FilterPanelProps {
   brands: FilterOption[];
   stores: FilterOption[];
+  availableSizes?: string[];
   maxPriceCeiling?: number;
 }
 
 export function FilterPanel({
   brands,
   stores,
+  availableSizes = [],
   maxPriceCeiling = 100000,
 }: FilterPanelProps) {
   const router = useRouter();
@@ -36,6 +34,14 @@ export function FilterPanel({
   const getParam = (key: string) => searchParams.get(key) ?? "";
   const getList = (key: string) =>
     searchParams.get(key)?.split(",").filter(Boolean) ?? [];
+
+  // Local price state — only pushed to URL on blur or Enter
+  const [localMin, setLocalMin] = useState(searchParams.get("minPrice") ?? "");
+  const [localMax, setLocalMax] = useState(searchParams.get("maxPrice") ?? "");
+
+  // Sync local state when URL params change externally (e.g. "Nullstill" clears all)
+  useEffect(() => { setLocalMin(searchParams.get("minPrice") ?? ""); }, [searchParams.get("minPrice")]);
+  useEffect(() => { setLocalMax(searchParams.get("maxPrice") ?? ""); }, [searchParams.get("maxPrice")]);
 
   function updateParams(updates: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -70,15 +76,10 @@ export function FilterPanel({
     "brands",
     "stores",
     "sizes",
-    "gender",
-    "frameMaterial",
     "electric",
-    "inStock",
   ].filter((k) => searchParams.has(k)).length;
 
-  const categories: BikeCategory[] = ["ROAD", "GRAVEL", "MTB", "EBIKE"];
-  const materials: FrameMaterial[] = ["CARBON", "ALUMINUM", "STEEL", "TITANIUM"];
-  const genders: Gender[] = ["MENS", "WOMENS", "UNISEX"];
+  const categories: BikeCategory[] = ["ROAD", "GRAVEL", "MTB", "EBIKE", "TT"];
   const discountPresets = [10, 20, 30, 40];
 
   return (
@@ -123,44 +124,48 @@ export function FilterPanel({
           <input
             type="number"
             placeholder="Fra"
-            value={getParam("minPrice")}
-            onChange={(e) => updateParams({ minPrice: e.target.value || null })}
+            value={localMin}
+            onChange={(e) => setLocalMin(e.target.value)}
+            onBlur={() => updateParams({ minPrice: localMin || null })}
+            onKeyDown={(e) => e.key === "Enter" && updateParams({ minPrice: localMin || null })}
             className="w-full rounded border border-zinc-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent-500"
           />
           <input
             type="number"
             placeholder="Til"
-            value={getParam("maxPrice")}
-            onChange={(e) => updateParams({ maxPrice: e.target.value || null })}
+            value={localMax}
+            onChange={(e) => setLocalMax(e.target.value)}
+            onBlur={() => updateParams({ maxPrice: localMax || null })}
+            onKeyDown={(e) => e.key === "Enter" && updateParams({ maxPrice: localMax || null })}
             className="w-full rounded border border-zinc-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent-500"
           />
         </div>
       </FilterSection>
 
-      {/* Discount presets */}
-      <FilterSection title="Minimum rabatt">
-        <div className="flex flex-wrap gap-2">
-          {discountPresets.map((pct) => {
-            const isActive = getParam("minDiscount") === String(pct);
-            return (
-              <button
-                key={pct}
-                onClick={() =>
-                  updateParams({ minDiscount: isActive ? null : String(pct) })
-                }
-                className={clsx(
-                  "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                  isActive
-                    ? "border-accent-500 bg-accent-500 text-white"
-                    : "border-zinc-300 text-zinc-700 hover:border-accent-400"
-                )}
-              >
-                -{pct}%+
-              </button>
-            );
-          })}
-        </div>
-      </FilterSection>
+      {/* Sizes */}
+      {availableSizes.length > 0 && (
+        <FilterSection title="Størrelse">
+          <div className="flex flex-wrap gap-1.5">
+            {availableSizes.map((size) => {
+              const isActive = getList("sizes").includes(size);
+              return (
+                <button
+                  key={size}
+                  onClick={() => toggleListParam("sizes", size)}
+                  className={clsx(
+                    "rounded border px-2 py-0.5 text-xs font-medium transition-colors",
+                    isActive
+                      ? "border-accent-500 bg-accent-500 text-white"
+                      : "border-zinc-300 text-zinc-700 hover:border-accent-400"
+                  )}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        </FilterSection>
+      )}
 
       {/* Brands */}
       {brands.length > 0 && (
@@ -192,38 +197,40 @@ export function FilterPanel({
         </FilterSection>
       )}
 
-      {/* Size filter omitted — no retailer currently provides scraped size data.
-          Re-enable SizeGroup sections here once BikeListingSize rows exist. */}
+      {/* Discount presets */}
+      <FilterSection title="Minimum rabatt">
+        <div className="flex flex-wrap gap-2">
+          {discountPresets.map((pct) => {
+            const isActive = getParam("minDiscount") === String(pct);
+            return (
+              <button
+                key={pct}
+                onClick={() =>
+                  updateParams({ minDiscount: isActive ? null : String(pct) })
+                }
+                className={clsx(
+                  "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                  isActive
+                    ? "border-accent-500 bg-accent-500 text-white"
+                    : "border-zinc-300 text-zinc-700 hover:border-accent-400"
+                )}
+              >
+                -{pct}%+
+              </button>
+            );
+          })}
+        </div>
+      </FilterSection>
 
-      {/* Gender */}
+      {/* Gender — hidden until scraper provides reliable gender data
       <FilterSection title="Kjønn">
-        {genders.map((g) => (
-          <CheckItem
-            key={g}
-            label={GENDER_LABELS[g]}
-            checked={getParam("gender") === g}
-            onChange={() =>
-              updateParams({ gender: getParam("gender") === g ? null : g })
-            }
-          />
-        ))}
-      </FilterSection>
+        {genders.map((g) => ( ... ))}
+      </FilterSection> */}
 
-      {/* Frame material */}
+      {/* Frame material — hidden until scraper provides reliable material data
       <FilterSection title="Ramme">
-        {materials.map((m) => (
-          <CheckItem
-            key={m}
-            label={FRAME_MATERIAL_LABELS[m]}
-            checked={getParam("frameMaterial") === m}
-            onChange={() =>
-              updateParams({
-                frameMaterial: getParam("frameMaterial") === m ? null : m,
-              })
-            }
-          />
-        ))}
-      </FilterSection>
+        {materials.map((m) => ( ... ))}
+      </FilterSection> */}
 
       {/* Electric */}
       <FilterSection title="Motor">
@@ -243,16 +250,6 @@ export function FilterPanel({
         />
       </FilterSection>
 
-      {/* Stock */}
-      <FilterSection title="Tilgjengelighet">
-        <CheckItem
-          label="Kun på lager"
-          checked={getParam("inStock") === "true"}
-          onChange={() =>
-            updateParams({ inStock: getParam("inStock") === "true" ? null : "true" })
-          }
-        />
-      </FilterSection>
     </div>
   );
 }
