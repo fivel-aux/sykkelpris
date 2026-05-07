@@ -52,7 +52,7 @@ export function Footer() {
 
         <div className="border-t border-zinc-100 py-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-zinc-400">
           <p>© {new Date().getFullYear()} Sykkelpris. Priser og tilgjengelighet kan ha endret seg.</p>
-          <p>Prisene oppdateres automatisk flere ganger daglig.</p>
+          <p>Priser og tilgjengelighet oppdateres automatisk daglig.</p>
         </div>
       </Container>
     </footer>

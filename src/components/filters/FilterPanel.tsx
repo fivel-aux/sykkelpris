@@ -233,7 +233,7 @@ export function FilterPanel({
       </FilterSection> */}
 
       {/* Electric */}
-      <FilterSection title="Motor">
+      <FilterSection title="Elektrisk">
         <CheckItem
           label="Kun elsykler"
           checked={getParam("electric") === "true"}
