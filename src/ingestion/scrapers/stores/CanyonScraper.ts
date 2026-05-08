@@ -444,27 +444,42 @@ function sleep(ms: number) {
 }
 
 /**
- * Normalize a Canyon Cloudinary image URL to 4:3 card proportions with a white canvas.
+ * Normalize a Canyon image URL to 1024×768 (4:3) for sharp card display.
  *
- * Canyon serves images with hardcoded Cloudinary transforms, e.g.:
- *   /image/upload/w_511,h_288,c_fit/b_rgb:F2F2F2/f_auto/q_auto/v.../filename  (listing, 16:9)
- *   /image/upload/w_1145,h_645,c_fit/f_auto/q_auto/v.../filename              (og:image, 16:9)
+ * Product cards are large and displayed on high-DPI/Retina screens — 511px was
+ * too low and caused visible stretching. 1024×768 (4:3 ≈ 1.33:1) matches the
+ * card image container at 2× density.
  *
- * We normalise all Cloudinary URLs to w_511,h_383 (4:3 ≈ 1.33:1), with a white
- * canvas fill so the bike renders cleanly on a white card background.
+ * Canyon serves images from two CDN systems:
  *
- * Demandware URLs (canyon.com/dw/image) are returned unchanged — they don't use
- * Cloudinary transforms and are already acceptable quality for card display.
+ *   Cloudinary (dma.canyon.com):
+ *     /image/upload/w_511,h_288,c_fit/b_rgb:F2F2F2/f_auto/q_auto/v.../file  (listing, 16:9)
+ *     /image/upload/w_1145,h_645,c_fit/f_auto/q_auto/v.../file              (og:image, 16:9)
+ *     → Replace w_NNN → w_1024, h_NNN → h_768. Replace grey canvas fill
+ *       (b_rgb:F2F2F2) with white (b_rgb:FFFFFF). Keep c_fit, f_auto, q_auto.
  *
- * Returns the original URL unchanged if it doesn't match the expected pattern,
+ *   Demandware (canyon.com/dw/image):
+ *     ...?sw=1145&sh=645&sm=fit&sfrm=png
+ *     → Replace sw=NNN → sw=1024, sh=NNN → sh=768. Keep sm=fit and sfrm=*.
+ *
+ * Returns the original URL unchanged if it doesn't match either pattern,
  * so this is safe to call on any URL.
  */
 function rewriteCanyonImageUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  if (!url.includes("dma.canyon.com")) return url;
 
-  return url
-    .replace(/\bw_\d+\b/, "w_511")                      // normalize width
-    .replace(/\bh_\d+\b/, "h_383")                      // 4:3 to match w_511
-    .replace(/\bb_rgb:[0-9A-Fa-f]+\b/, "b_rgb:FFFFFF"); // white canvas fill
+  if (url.includes("dma.canyon.com")) {
+    return url
+      .replace(/\bw_\d+\b/, "w_1024")                     // 1024px wide (Retina-ready)
+      .replace(/\bh_\d+\b/, "h_768")                      // 768px tall → 4:3
+      .replace(/\bb_rgb:[0-9A-Fa-f]+\b/, "b_rgb:FFFFFF"); // white canvas fill
+  }
+
+  if (url.includes("canyon.com/dw/image")) {
+    return url
+      .replace(/\bsw=\d+\b/, "sw=1024")  // width → 1024
+      .replace(/\bsh=\d+\b/, "sh=768");  // height → 768 (4:3)
+  }
+
+  return url;
 }
