@@ -14,6 +14,7 @@ export function HeroVideo() {
       autoPlay
       muted
       playsInline
+      preload="none"
       poster="/videos/hero-poster.jpg"
       aria-hidden
       onEnded={() => setIndex((i) => (i + 1) % VIDEOS.length)}

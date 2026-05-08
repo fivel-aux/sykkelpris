@@ -1,3 +1,4 @@
+import { clsx } from "clsx";
 import { Bike, Clock, ShieldCheck, Store } from "lucide-react";
 import { formatRelativeDate } from "@/lib/formatters";
 import type { StatsDTO } from "@/types/bike";
@@ -33,11 +34,20 @@ export function TrustBar({ stats }: TrustBarProps) {
   return (
     <div className="border-b border-zinc-200 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <dl className="grid grid-cols-2 divide-x divide-zinc-100 md:grid-cols-4">
-          {items.map((item) => (
+        <dl className="grid grid-cols-2 md:grid-cols-4">
+          {items.map((item, i) => (
             <div
               key={item.label}
-              className="flex items-center gap-3 px-5 py-4 first:pl-0 last:pr-0"
+              className={clsx(
+                "flex items-center gap-3 px-5 py-4",
+                // Mobile 2-col grid: right border on left column, bottom border on top row
+                i % 2 === 0 && "border-r border-zinc-100",
+                i < 2 && "border-b border-zinc-100 md:border-b-0",
+                // md+ 4-col row: right border between all items except last
+                i < items.length - 1 && "md:border-r md:border-zinc-100",
+                i === 0 && "pl-0",
+                i === items.length - 1 && "pr-0",
+              )}
             >
               {item.icon}
               <div className="min-w-0">

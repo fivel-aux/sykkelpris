@@ -108,11 +108,11 @@ export function BikeListItem({ listing }: BikeListItemProps) {
         </div>
       </div>
 
-      {/* CTA — only visible on sm+ to avoid cramping small screens */}
-      <div className="hidden shrink-0 items-center sm:flex">
-        <span className="flex items-center gap-1.5 rounded-lg bg-accent-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors group-hover:bg-accent-600">
-          Se tilbud
-          <ArrowRight className="h-3.5 w-3.5" />
+      {/* CTA — icon-only on mobile, full button on sm+ */}
+      <div className="flex shrink-0 items-center">
+        <span className="flex items-center justify-center gap-1.5 rounded-lg bg-accent-500 p-2 text-white transition-colors group-hover:bg-accent-600 sm:px-4 sm:py-2.5">
+          <span className="hidden text-sm font-semibold sm:inline">Se tilbud</span>
+          <ArrowRight className="h-4 w-4" />
         </span>
       </div>
     </Link>

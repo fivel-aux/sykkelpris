@@ -81,13 +81,6 @@ export default async function SyklerPage({ searchParams }: PageProps) {
           </p>
         </div>
 
-        {/* ── Mobile search ────────────────────────────────────────────── */}
-        <div className="mb-4 md:hidden">
-          <Suspense fallback={null}>
-            <SearchBar placeholder="Søk etter sykkel, merke eller type..." />
-          </Suspense>
-        </div>
-
         <div className="flex items-start gap-6">
           {/* ── Desktop sidebar ──────────────────────────────────────────── */}
           <aside className="hidden w-56 shrink-0 lg:block">
