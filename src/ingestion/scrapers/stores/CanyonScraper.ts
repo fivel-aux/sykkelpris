@@ -98,13 +98,18 @@ export class CanyonScraper extends BaseScraper {
           this.log(`  ${sizes.length} sizes parsed (${inStockCount} in stock)`);
         }
 
+        const detailImageUrl = parseDetailImage(html);
+        if (!detailImageUrl) {
+          this.log(`  no product image found in detail page`, "warn");
+        }
+
         results.push({
           externalId: candidate.externalId,
           externalUrl: candidate.externalUrl,
           rawTitle: candidate.rawTitle,
           originalPrice: prices.originalPrice,
           currentPrice: prices.currentPrice,
-          imageUrl: candidate.imageUrl,
+          imageUrl: detailImageUrl ?? candidate.imageUrl,
           rawCategory: candidate.rawCategory,
           rawBrand: "Canyon",
           isInStock: true, // outlet listings are live for-sale products
@@ -276,6 +281,60 @@ export class CanyonScraper extends BaseScraper {
 }
 
 /**
+ * Extract the main product image from a Canyon detail page HTML.
+ *
+ * Canyon serves outlet products from two CDN systems:
+ *   - Cloudinary:   dma.canyon.com/image/upload/...  (road/race bikes)
+ *   - Demandware:   www.canyon.com/dw/image/...      (some gravel/MTB/e-bikes)
+ *
+ * og:image is the most reliable source — Canyon sets it to the hero product
+ * image on all outlet product pages. Falls back to the first Cloudinary URL
+ * found in the page body.
+ *
+ * Cloudinary URLs are passed through rewriteCanyonImageUrl to fix the 4:3
+ * aspect ratio and canvas colour. Demandware URLs are returned as-is.
+ *
+ * Returns null (and logs a warning) when no Canyon CDN image is found, so
+ * the caller can fall back to whatever was scraped from the listing page.
+ */
+function parseDetailImage(html: string): string | null {
+  // 1. og:image — Canyon sets this to the hero product image on outlet pages
+  const ogMatch = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/);
+  let url = ogMatch?.[1]?.trim() ?? null;
+
+  // 2. twitter:image — same image, different meta tag
+  if (!url) {
+    const twMatch = html.match(/<meta[^>]+name="twitter:image"[^>]+content="([^"]+)"/);
+    url = twMatch?.[1]?.trim() ?? null;
+  }
+
+  // 3. First Cloudinary image URL in the body (product gallery fallback)
+  if (!url) {
+    const cdnMatch = html.match(/(https:\/\/dma\.canyon\.com\/image\/upload[^"'\s,]+)/);
+    url = cdnMatch?.[1] ?? null;
+  }
+
+  if (!url) return null;
+
+  // Decode HTML entities — og:image content often encodes & as &amp; in Demandware URLs
+  url = url.replace(/&amp;/g, "&");
+
+  // Cloudinary (dma.canyon.com) — always product-specific; normalise to 4:3 white canvas
+  if (url.includes("dma.canyon.com")) return rewriteCanyonImageUrl(url);
+
+  // Demandware (canyon.com/dw/image) — only accept product-specific images from the
+  // master catalog. Reject storefront/category-landing paths which are generic
+  // marketing shots used as fallback og:image on some pages (e.g. outlet hero banners).
+  if (
+    url.includes("canyon.com/dw/image") &&
+    url.includes("Sites-canyon-master") &&
+    !url.includes("category-landing")
+  ) return url;
+
+  return null;
+}
+
+/**
  * Extract per-size availability from Canyon's JSON-LD Product block.
  *
  * Canyon embeds a Schema.org Product in each detail page with one Offer per
@@ -385,21 +444,17 @@ function sleep(ms: number) {
 }
 
 /**
- * Rewrite a Canyon Cloudinary image URL so the delivered image fits the 4:3
- * card container without dead space, and the canvas fill is white instead of grey.
+ * Normalize a Canyon Cloudinary image URL to 4:3 card proportions with a white canvas.
  *
- * Canyon serves listing images with hardcoded Cloudinary transforms embedded in
- * the URL path, e.g.:
- *   /image/upload/w_511,h_288,c_fit/b_rgb:F2F2F2/f_auto/q_auto/v.../filename
+ * Canyon serves images with hardcoded Cloudinary transforms, e.g.:
+ *   /image/upload/w_511,h_288,c_fit/b_rgb:F2F2F2/f_auto/q_auto/v.../filename  (listing, 16:9)
+ *   /image/upload/w_1145,h_645,c_fit/f_auto/q_auto/v.../filename              (og:image, 16:9)
  *
- * Two problems:
- *   1. w_511,h_288 is 16:9 (1.78:1). The card is 4:3 (1.33:1). object-contain
- *      letterboxes the image, leaving ~25% of the container height as empty space.
- *      Fix: change h_288 → h_383 (511/383 ≈ 1.33) so Cloudinary pads to 4:3.
+ * We normalise all Cloudinary URLs to w_511,h_383 (4:3 ≈ 1.33:1), with a white
+ * canvas fill so the bike renders cleanly on a white card background.
  *
- *   2. b_rgb:F2F2F2 bakes a medium-grey (#F2F2F2) into the JPEG canvas. This
- *      never matches any container background exactly, causing a visible colour
- *      mismatch. Fix: replace with b_rgb:FFFFFF (white).
+ * Demandware URLs (canyon.com/dw/image) are returned unchanged — they don't use
+ * Cloudinary transforms and are already acceptable quality for card display.
  *
  * Returns the original URL unchanged if it doesn't match the expected pattern,
  * so this is safe to call on any URL.
@@ -409,6 +464,7 @@ function rewriteCanyonImageUrl(url: string | null | undefined): string | null {
   if (!url.includes("dma.canyon.com")) return url;
 
   return url
-    .replace(/\bh_\d+\b/, "h_383")        // 4:3 height to match w_511
+    .replace(/\bw_\d+\b/, "w_511")                      // normalize width
+    .replace(/\bh_\d+\b/, "h_383")                      // 4:3 to match w_511
     .replace(/\bb_rgb:[0-9A-Fa-f]+\b/, "b_rgb:FFFFFF"); // white canvas fill
 }
