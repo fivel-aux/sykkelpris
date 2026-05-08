@@ -260,17 +260,16 @@ export async function getFilterOptions(): Promise<FilterOptionsDTO> {
 /**
  * Fetch filter option counts that reflect the current active filter state.
  *
- * For each filter group, all other active filters are held constant while
- * the count for each option in that group is computed. Within-group logic
- * is OR (matching buildWhereClause): selecting an additional brand/store
- * adds to the result set, not narrows it.
- *
  * Count semantics:
- *   brand X → how many results with all current filters + brand X in brands list
- *   store S → how many results with all current filters + store S in stores list
+ *   brand X → how many eligible listings have brand X, given all non-brand filters
+ *   store S → how many eligible listings are from store S, given all non-store filters
  *
- * Zero-count options are included if they are currently selected (so users
- * can uncheck them), and omitted if unselected (keeps the list clean).
+ * Zero-count options are omitted unless they are currently selected (so users
+ * can still uncheck a brand/store that yields no results under other filters).
+ *
+ * Query count: 3 parallel queries (brand grouped, store grouped, sizes) plus
+ * one small fallback per group only when a selected brand/store has 0 results.
+ * Previously ran ~N+M+3 queries (one count per brand, one per store).
  */
 export async function getDynamicFilterOptions(
   filters: ListingFilters
@@ -278,59 +277,93 @@ export async function getDynamicFilterOptions(
   const activeBrands = filters.brands ?? [];
   const activeStores = filters.stores ?? [];
 
-  // Base where for each group — strip that group's own filter so we don't
-  // double-apply it when we add it back per-option below.
   const brandBase = buildWhereClause({ ...filters, brands: undefined });
   const storeBase = buildWhereClause({ ...filters, stores: undefined });
 
-  // Fetch the global list of eligible brands/stores to iterate over.
-  const [allBrands, allStores] = await Promise.all([getBrands(), getStores()]);
-
-  // Run one count per brand in parallel.
-  const brandCounts = await Promise.all(
-    allBrands.map(async (b) => {
-      const slugs = [...new Set([...activeBrands, b.slug])];
-      const count = await db.bikeListing.count({
-        where: {
-          ...brandBase,
-          brands: { some: { brand: { slug: { in: slugs } }, isPrimary: true } },
-        },
-      });
-      return { value: b.slug, label: b.name, count };
-    })
-  );
-
-  // Run one count per store in parallel.
-  const storeCounts = await Promise.all(
-    allStores.map(async (s) => {
-      const slugs = [...new Set([...activeStores, s.slug])];
-      const count = await db.bikeListing.count({
-        where: {
-          ...storeBase,
-          store: { slug: { in: slugs } },
-        },
-      });
-      return { value: s.slug, label: s.name, count };
-    })
-  );
-
-  // Available sizes — only from stores with reliable per-size stock data,
-  // and only sizes currently in stock for eligible listings.
-  const rawSizes = await db.bikeListingSize.findMany({
-    where: {
-      isInStock: true,
-      listing: {
-        ...listingEligibility(),
-        store: { slug: { in: [...RELIABLE_SIZE_STORE_SLUGS] } },
+  const [brandsWithCounts, storesWithCounts, rawSizes] = await Promise.all([
+    // One grouped query: count per brand given all non-brand filters.
+    db.brand.findMany({
+      where: {
+        listings: { some: { isPrimary: true, listing: brandBase } },
       },
-    },
-    select: { size: true },
-    distinct: ["size"],
-  });
+      select: {
+        slug: true,
+        name: true,
+        _count: {
+          select: {
+            listings: { where: { isPrimary: true, listing: brandBase } },
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    }),
+    // One grouped query: count per store given all non-store filters.
+    db.store.findMany({
+      where: {
+        isActive: true,
+        shipsToNorway: true,
+        listings: { some: storeBase },
+      },
+      select: {
+        slug: true,
+        name: true,
+        _count: {
+          select: { listings: { where: storeBase } },
+        },
+      },
+      orderBy: { name: "asc" },
+    }),
+    // Available sizes — unchanged.
+    db.bikeListingSize.findMany({
+      where: {
+        isInStock: true,
+        listing: {
+          ...listingEligibility(),
+          store: { slug: { in: [...RELIABLE_SIZE_STORE_SLUGS] } },
+        },
+      },
+      select: { size: true },
+      distinct: ["size"],
+    }),
+  ]);
+
+  const brandOptions = brandsWithCounts.map((b) => ({
+    value: b.slug,
+    label: b.name,
+    count: b._count.listings,
+  }));
+
+  // A selected brand with 0 results won't appear in the grouped query result.
+  // Fetch it separately so the user can still uncheck it.
+  const foundBrandSlugs = new Set(brandsWithCounts.map((b) => b.slug));
+  const missingActiveBrands = activeBrands.filter((s) => !foundBrandSlugs.has(s));
+  if (missingActiveBrands.length > 0) {
+    const missing = await db.brand.findMany({
+      where: { slug: { in: missingActiveBrands } },
+      select: { slug: true, name: true },
+    });
+    for (const b of missing) brandOptions.push({ value: b.slug, label: b.name, count: 0 });
+  }
+
+  const storeOptions = storesWithCounts.map((s) => ({
+    value: s.slug,
+    label: s.name,
+    count: s._count.listings,
+  }));
+
+  const foundStoreSlugs = new Set(storesWithCounts.map((s) => s.slug));
+  const missingActiveStores = activeStores.filter((s) => !foundStoreSlugs.has(s));
+  if (missingActiveStores.length > 0) {
+    const missing = await db.store.findMany({
+      where: { slug: { in: missingActiveStores } },
+      select: { slug: true, name: true },
+    });
+    for (const s of missing) storeOptions.push({ value: s.slug, label: s.name, count: 0 });
+  }
 
   return {
-    brands: brandCounts,
-    stores: storeCounts,
+    brands: brandOptions,
+    stores: storeOptions,
     sizes: sortSizeLabels(rawSizes.map((r) => r.size)),
   };
 }
