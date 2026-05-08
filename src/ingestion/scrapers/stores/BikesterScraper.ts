@@ -58,28 +58,20 @@ export class BikesterScraper extends BaseScraper {
   }
 
   async fetchProducts(): Promise<RawProduct[]> {
-    // Phase 1: collect discounted candidates from listing pages.
-    // Each candidate already carries an imageUrl from data-lazysrc (622×508).
     const candidates = await this.collectCandidates();
-    this.log(
-      `${candidates.length} discounted candidates found — fetching detail pages for hi-res images`
-    );
+    this.log(`${candidates.length} discounted candidates found`);
 
-    // Phase 2: fetch detail page for each candidate to upgrade to the main product
-    // image (800×516, itemprop="image"). Falls back to the listing-page image when
-    // the detail fetch fails so no candidate is dropped solely for lack of an image.
-    const products: RawProduct[] = [];
-    for (const c of candidates) {
-      const detail = await this.fetchDetailPage(c.externalUrl);
-      const imageUrl = detail.imageUrl ?? c.imageUrl;
-
-      if (!imageUrl) {
-        this.log(`No image — skipping: ${c.rawTitle}`, "warn");
-        await sleep(DETAIL_DELAY_MS);
-        continue;
+    // Phase 2 (detail-page fetching) is intentionally skipped for launch stability.
+    // Listing pages already provide real CDN images (622×508 via data-lazysrc) and
+    // accurate prices. Detail pages only add slightly higher resolution images and
+    // size labels — neither is worth the 60+ min runtime and timeout risk for 1300+
+    // candidates. fetchDetailPage and parseDetailSizes remain for post-launch refactor.
+    const products: RawProduct[] = candidates.flatMap((c) => {
+      if (!c.imageUrl) {
+        this.log(`No listing image — skipping: ${c.rawTitle}`, "warn");
+        return [];
       }
-
-      products.push({
+      return [{
         externalId: c.externalId,
         externalUrl: c.externalUrl,
         rawTitle: c.rawTitle,
@@ -87,15 +79,14 @@ export class BikesterScraper extends BaseScraper {
         rawCategory: c.rawCategory,
         currentPrice: c.currentPrice,
         originalPrice: c.originalPrice,
-        imageUrl,
+        imageUrl: c.imageUrl,
         isInStock: true,
-        sizes: detail.sizes,
+        sizes: [],
+        sizesConfident: false,
         description: null,
         scrapedAt: new Date(),
-      });
-
-      await sleep(DETAIL_DELAY_MS);
-    }
+      }];
+    });
 
     this.log(`${products.length} products ready for ingestion`);
     return products;
@@ -176,7 +167,7 @@ export class BikesterScraper extends BaseScraper {
       });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.text();
+      return await res.text();
     } catch (err) {
       this.log(`fetchHtml failed for ${url}: ${err}`, "warn");
       return null;
