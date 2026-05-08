@@ -12,7 +12,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:generate": "prisma generate",
     "db:setup": "prisma db push && tsx prisma/seed.ts",
-    "ingest": "npx tsx scripts/run-ingestion.ts"
+    "ingest": "npx tsx scripts/run-ingestion.ts",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
