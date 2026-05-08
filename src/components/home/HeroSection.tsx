@@ -14,7 +14,7 @@ const QUICK_LINKS = [
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-zinc-900 py-16 md:py-24">
+    <section className="relative overflow-hidden bg-zinc-900 py-10 md:py-24">
       {/* Background video — sequential playlist, falls back to bg-zinc-900 if unavailable. */}
       <HeroVideo />
 
@@ -51,14 +51,14 @@ export function HeroSection() {
           </h1>
 
           {/* Subtitle */}
-          <p className="mb-8 max-w-lg text-base leading-relaxed text-zinc-400 md:text-lg">
+          <p className="mb-5 max-w-lg text-base leading-relaxed text-zinc-400 md:mb-8 md:text-lg">
             Vi samler og oppdaterer tilbud på komplette sykler fra utvalgte
             nettbutikker som leverer til Norge — slik at du slipper å sjekke
             alle selv.
           </p>
 
           {/* Search */}
-          <div className="mb-7 max-w-lg">
+          <div className="mb-5 max-w-lg md:mb-7">
             <Suspense fallback={null}>
               <SearchBar
                 placeholder="Søk etter merke, modell eller type..."

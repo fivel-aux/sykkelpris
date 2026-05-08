@@ -81,6 +81,13 @@ export default async function SyklerPage({ searchParams }: PageProps) {
           </p>
         </div>
 
+        {/* ── Mobile search ────────────────────────────────────────────── */}
+        <div className="mb-4 md:hidden">
+          <Suspense fallback={null}>
+            <SearchBar placeholder="Søk etter sykkel, merke eller type..." />
+          </Suspense>
+        </div>
+
         <div className="flex items-start gap-6">
           {/* ── Desktop sidebar ──────────────────────────────────────────── */}
           <aside className="hidden w-56 shrink-0 lg:block">
@@ -179,7 +186,7 @@ export default async function SyklerPage({ searchParams }: PageProps) {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
                 {listings.map((l) => (
                   <BikeCard key={l.id} listing={l} fromUrl={fromUrl} />
                 ))}

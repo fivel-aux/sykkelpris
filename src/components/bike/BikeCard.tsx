@@ -44,7 +44,7 @@ export function BikeCard({ listing, fromUrl }: BikeCardProps) {
             src={listing.primaryImageUrl}
             alt={listing.modelName}
             fill
-            className="object-contain p-2 transition-transform duration-300 group-hover:scale-[1.04]"
+            className="object-contain p-3 transition-transform duration-300 group-hover:scale-[1.04]"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
@@ -55,13 +55,13 @@ export function BikeCard({ listing, fromUrl }: BikeCardProps) {
 
         {/* Discount badge */}
         {listing.discountPercent > 0 && (
-          <span className="absolute left-3 top-3 rounded-md bg-accent-500 px-2 py-0.5 text-sm font-bold text-white">
+          <span className="absolute left-3 top-4 rounded-md bg-accent-500 px-2 py-0.5 text-sm font-bold text-white">
             -{listing.discountPercent}%
           </span>
         )}
 
         {/* Category badge */}
-        <span className="absolute right-3 top-3">
+        <span className="absolute right-3 top-4">
           <Badge variant="category">{CATEGORY_LABELS[listing.category]}</Badge>
         </span>
       </div>

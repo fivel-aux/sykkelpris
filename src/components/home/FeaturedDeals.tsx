@@ -33,8 +33,8 @@ export function FeaturedDeals({ deals }: FeaturedDealsProps) {
           </Link>
         </div>
 
-        {/* Grid — 2 cols on mobile, 3 on md+ */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+        {/* Grid — 1 col on mobile, 2 on sm+, 3 on md+ */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {deals.map((listing) => (
             <BikeCard key={listing.id} listing={listing} />
           ))}

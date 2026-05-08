@@ -8,7 +8,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-zinc-200 shadow-sm">
       <Container>
-        <div className="flex h-16 items-center gap-4">
+        <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo */}
           <Link
             href="/"
@@ -59,19 +59,13 @@ export function Header() {
             </Link>
             <Link
               href="/sykler"
-              className="ml-2 px-4 py-2 bg-accent-500 hover:bg-accent-600 text-white text-sm font-medium rounded-md transition-colors"
+              className="inline-flex items-center px-4 py-2.5 text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-white rounded-lg transition-colors lg:ml-2"
             >
               Alle sykler
             </Link>
           </nav>
         </div>
 
-        {/* Mobile search bar */}
-        <div className="md:hidden pb-3">
-          <Suspense fallback={null}>
-            <SearchBar placeholder="Søk etter sykkel..." />
-          </Suspense>
-        </div>
       </Container>
     </header>
   );

@@ -39,14 +39,14 @@ export function TrustBar({ stats }: TrustBarProps) {
             <div
               key={item.label}
               className={clsx(
-                "flex items-center gap-3 px-5 py-4",
+                "flex items-center gap-3 px-3 py-4 md:px-5",
                 // Mobile 2-col grid: right border on left column, bottom border on top row
                 i % 2 === 0 && "border-r border-zinc-100",
                 i < 2 && "border-b border-zinc-100 md:border-b-0",
-                // md+ 4-col row: right border between all items except last
+                // md+ 4-col row: right border between all items except last; flush outer edges
                 i < items.length - 1 && "md:border-r md:border-zinc-100",
-                i === 0 && "pl-0",
-                i === items.length - 1 && "pr-0",
+                i === 0 && "md:pl-0",
+                i === items.length - 1 && "md:pr-0",
               )}
             >
               {item.icon}
