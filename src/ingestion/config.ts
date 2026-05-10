@@ -50,3 +50,12 @@ export const MIN_PRICE_NOK = 3_000;
  * Filters out obvious data errors.
  */
 export const MAX_PRICE_NOK = 500_000;
+
+/**
+ * Minimum discount percentage for a listing to enter the catalog.
+ * Listings at 0–4% discount are effectively full price (currency-conversion
+ * rounding noise, marginal retailer price differences) and should not appear
+ * as "deals". Applied centrally in the normalizer so every scraper follows
+ * the same rule automatically.
+ */
+export const MIN_DISCOUNT_PERCENT = 5;

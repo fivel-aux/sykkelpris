@@ -3,7 +3,7 @@ import type { RawProduct } from "../scrapers/types";
 import { matchBrand, extractBrandFromTitle } from "./brand";
 import { classifyCategory, isElectric } from "./category";
 import { normalizeSizes } from "./size";
-import { MIN_PRICE_NOK, MAX_PRICE_NOK } from "../config";
+import { MIN_PRICE_NOK, MAX_PRICE_NOK, MIN_DISCOUNT_PERCENT } from "../config";
 
 // Stores where per-size availability is server-rendered and reliable.
 // For these stores, isInStock is derived from sizes when size data exists.
@@ -79,6 +79,13 @@ export function normalize(
     originalPrice > discountedPrice
       ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
       : 0;
+
+  // Reject listings below the minimum discount threshold — near-zero
+  // discounts are rounding noise or negligible retailer price differences,
+  // not genuine deals.
+  if (discountPercent < MIN_DISCOUNT_PERCENT) {
+    return null;
+  }
 
   // --- Model name ---
   // Strip brand from title if it starts with the brand name

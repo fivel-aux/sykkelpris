@@ -1,7 +1,7 @@
 import type { BikeCategory } from "@prisma/client";
 
 // ── Gate 1: Not a bike at all ─────────────────────────────────────────────────
-// Parts, accessories, clothing, components. These are not complete bikes.
+// Parts, accessories, clothing, components, and non-bike micromobility products.
 const NON_BIKE_KEYWORDS = [
   "hjul", "wheel", "saddle", "sete", "pedal", "stem", "styre", "handlebar",
   "fork", "gaffel", "frame", "ramme", "component", "del", "part",
@@ -9,6 +9,8 @@ const NON_BIKE_KEYWORDS = [
   "light", "lys", "lock", "lås", "pump", "bag", "veske", "tube", "slange",
   "tyre", "tire", "dekk", "chain", "kjede", "cassette", "kassett",
   "crankset", "kranksett", "groupset", "gruppe",
+  // Electric kick-scooters — not bikes despite containing "sykkel" as a suffix
+  "elsparkesykkel", "sparkesykkel",
 ];
 
 // ── Gate 2: A bike, but outside the intended catalog scope ───────────────────
@@ -21,6 +23,7 @@ const OUT_OF_SCOPE_BIKE_KEYWORDS = [
   "cargo",       // cargo bikes
   "commuter",    // explicit commuter bikes (e.g. Canyon Commuter:ON)
   "citylite",    // explicit city bikes (e.g. Canyon Citylite:ON)
+  "bmx",         // BMX freestyle/park/dirt — not part of the sport performance catalog
 ];
 
 // ── Title-based overrides ─────────────────────────────────────────────────────
@@ -28,6 +31,10 @@ const OUT_OF_SCOPE_BIKE_KEYWORDS = [
 // Applied before Gate 3 so they can override a miscategorised rawCategory.
 const TITLE_OVERRIDES: { pattern: RegExp; category: BikeCategory }[] = [
   { pattern: /speedmax/i, category: "TT" },
+  // X-road / xroad bikes (e.g. Superior X-road) are allroad/gravel-capable
+  // and appear in Bikester's road category URL, so rawCategory alone can't
+  // correct them. This override fires before rawCategory matching.
+  { pattern: /\bx-road\b|\bxroad\b/i, category: "GRAVEL" },
 ];
 
 // ── Gate 3: Category classification ──────────────────────────────────────────

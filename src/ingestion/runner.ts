@@ -368,6 +368,10 @@ async function upsertListing(
     data: {
       rawTitle: listing.rawTitle,
       modelName: listing.modelName,
+      category: listing.category,
+      frameMaterial: listing.frameMaterial,
+      gender: listing.gender,
+      isElectric: listing.isElectric,
       originalPrice: listing.originalPrice,
       discountedPrice: listing.discountedPrice,
       discountPercent: listing.discountPercent,

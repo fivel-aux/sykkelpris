@@ -64,6 +64,11 @@ const KNOWN_BRANDS: BrandMatch[] = [
   { name: "Ghost", slug: "ghost" },
   { name: "Raymon", slug: "raymon" },
   { name: "Nox", slug: "nox" },
+  { name: "Superior", slug: "superior" },
+  { name: "Rock Machine", slug: "rock-machine" },
+  { name: "Besv", slug: "besv" },
+  { name: "Romet", slug: "romet" },
+  { name: "Tenways", slug: "tenways" },
   // Brands common on Sykkelbutikken.no
   { name: "Kalkhoff", slug: "kalkhoff" },
   { name: "Hard Rocx", slug: "hard-rocx" },
