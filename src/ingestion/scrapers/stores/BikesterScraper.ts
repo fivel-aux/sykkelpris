@@ -37,6 +37,11 @@ const DETAIL_DELAY_MS = 900;
 const PAGE_DELAY_MS = 500;
 const MAX_PAGES = 25;
 
+// Caps the number of detail-page fetches per run so the total added runtime
+// stays bounded (~3 min for 200 fetches at 900 ms/fetch + network).
+// Run multiple scheduled ingestions to gradually upgrade all listings.
+const MAX_DETAIL_FETCHES = 200;
+
 // Matches product links: /no/articles/2.SUBCATID.PRODUCTID/slug
 // Category links (/no/articles/2506/slug) do NOT match — they have only one number.
 const PRODUCT_HREF_RE = /^\/no\/articles\/2\.\d+\.(\d+)\//;
@@ -61,17 +66,43 @@ export class BikesterScraper extends BaseScraper {
     const candidates = await this.collectCandidates();
     this.log(`${candidates.length} discounted candidates found`);
 
-    // Phase 2 (detail-page fetching) is intentionally skipped for launch stability.
-    // Listing pages already provide real CDN images (622×508 via data-lazysrc) and
-    // accurate prices. Detail pages only add slightly higher resolution images and
-    // size labels — neither is worth the 60+ min runtime and timeout risk for 1300+
-    // candidates. fetchDetailPage and parseDetailSizes remain for post-launch refactor.
-    const products: RawProduct[] = candidates.flatMap((c) => {
-      if (!c.imageUrl) {
-        this.log(`No listing image — skipping: ${c.rawTitle}`, "warn");
-        return [];
+    // Phase 2: fetch detail pages for up to MAX_DETAIL_FETCHES candidates per run.
+    // Detail pages provide 800×516 images vs. the 311×254 listing thumbnails.
+    // The cap keeps added runtime to ~3 min; remaining candidates use the listing
+    // image as fallback. Re-run scheduled ingestion to upgrade all listings over time.
+    const products: RawProduct[] = [];
+    let detailFetches = 0;
+    let imagesUpgraded = 0;
+    let imageFallbacks = 0;
+    let detailFetchErrors = 0;
+
+    for (const c of candidates) {
+      let imageUrl: string | null = c.imageUrl;
+      let sizes: RawSize[] = [];
+
+      if (detailFetches < MAX_DETAIL_FETCHES) {
+        detailFetches++;
+        const detail = await this.fetchDetailPage(c.externalUrl);
+        sizes = detail.sizes;
+
+        if (detail.imageUrl) {
+          imageUrl = detail.imageUrl;
+          imagesUpgraded++;
+        } else if (c.imageUrl) {
+          imageFallbacks++;
+        } else {
+          detailFetchErrors++;
+        }
+
+        await sleep(DETAIL_DELAY_MS);
       }
-      return [{
+
+      if (!imageUrl) {
+        this.log(`No image for ${c.rawTitle} — skipping`, "warn");
+        continue;
+      }
+
+      products.push({
         externalId: c.externalId,
         externalUrl: c.externalUrl,
         rawTitle: c.rawTitle,
@@ -79,15 +110,18 @@ export class BikesterScraper extends BaseScraper {
         rawCategory: c.rawCategory,
         currentPrice: c.currentPrice,
         originalPrice: c.originalPrice,
-        imageUrl: c.imageUrl,
+        imageUrl,
         isInStock: true,
-        sizes: [],
+        sizes,
         sizesConfident: false,
         description: null,
         scrapedAt: new Date(),
-      }];
-    });
+      });
+    }
 
+    this.log(
+      `Phase 2: ${detailFetches} detail fetches — ${imagesUpgraded} upgraded, ${imageFallbacks} fallbacks, ${detailFetchErrors} errors`
+    );
     this.log(`${products.length} products ready for ingestion`);
     return products;
   }
@@ -291,8 +325,9 @@ function parseListingPage(
     });
 
     // ── Listing-page image (fallback) ────────────────────────────────────────
-    // The thumbnail img carries the real CDN URL in data-lazysrc (622×508).
-    // Phase 2 will upgrade this to the hi-res detail image when available.
+    // The thumbnail img carries a real CDN URL in data-lazysrc (311×254).
+    // Phase 2 upgrades this to the detail-page image (800×516) for the first
+    // MAX_DETAIL_FETCHES candidates per run.
     const lazySrc = $container.find(".thumb img").first().attr("data-lazysrc") ?? "";
     const imageUrl =
       lazySrc.includes("cdn37.se") && !lazySrc.includes("placeholder") ? lazySrc : null;

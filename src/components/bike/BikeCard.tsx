@@ -45,7 +45,7 @@ export function BikeCard({ listing, fromUrl }: BikeCardProps) {
             alt={listing.modelName}
             fill
             className="object-contain p-3 transition-transform duration-300 group-hover:scale-[1.04]"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
