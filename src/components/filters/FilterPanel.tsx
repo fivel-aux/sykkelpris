@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition, useState, useEffect } from "react";
-import { X, SlidersHorizontal } from "lucide-react";
+import { X } from "lucide-react";
 import { clsx } from "clsx";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import type { BikeCategory } from "@prisma/client";
@@ -87,10 +87,9 @@ export function FilterPanel({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
-          <SlidersHorizontal className="h-4 w-4" />
           Filtre
           {activeCount > 0 && (
-            <span className="rounded-full bg-accent-500 px-1.5 py-0.5 text-xs text-white">
+            <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-medium text-zinc-600">
               {activeCount}
             </span>
           )}
@@ -209,7 +208,7 @@ export function FilterPanel({
                   updateParams({ minDiscount: isActive ? null : String(pct) })
                 }
                 className={clsx(
-                  "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                  "rounded border px-2.5 py-1 text-xs font-medium transition-colors",
                   isActive
                     ? "border-accent-500 bg-accent-500 text-white"
                     : "border-zinc-300 text-zinc-700 hover:border-accent-400"
@@ -265,10 +264,10 @@ function FilterSection({
 }) {
   return (
     <div>
-      <h4 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+      <h4 className="mb-2.5 text-xs font-semibold tracking-wider text-zinc-500">
         {title}
       </h4>
-      <div className="space-y-1.5">{children}</div>
+      <div className="space-y-2">{children}</div>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { Container } from "@/components/layout/Container";
 import type { MarketShortcut } from "@/lib/queries";
 
@@ -9,14 +8,14 @@ interface Props {
 
 export function CategoryShortcuts({ shortcuts }: Props) {
   return (
-    <section className="bg-zinc-50 py-10">
+    <section className="bg-zinc-50 py-12">
       <Container>
         <h2 className="mb-5 text-xl font-bold text-zinc-900">
           Utforsk kategorier
         </h2>
 
         {/* Mobile: 1-column list rows. sm+: 5-column grid cards. */}
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-5 sm:gap-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-5 sm:gap-4">
           {shortcuts.map((s) => (
             <Link
               key={s.href}
@@ -38,12 +37,9 @@ export function CategoryShortcuts({ shortcuts }: Props) {
               <p className="flex-1 text-sm font-semibold leading-snug text-zinc-900 transition-colors duration-200 group-hover:text-accent-700 sm:flex-none">
                 {s.label}
               </p>
-              <div className="flex shrink-0 items-center gap-2 sm:w-full sm:shrink sm:justify-between">
-                <span className="text-xs text-zinc-400 transition-colors duration-200 group-hover:text-zinc-500">
-                  {s.count > 0 ? `${s.count} sykler` : "Ingen nå"}
-                </span>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-zinc-300 transition-all duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-accent-500" />
-              </div>
+              <span className="text-xs text-zinc-400 transition-colors duration-200 group-hover:text-zinc-500 sm:mt-auto">
+                {s.count > 0 ? `${s.count} sykler` : "Ingen nå"}
+              </span>
             </Link>
           ))}
         </div>

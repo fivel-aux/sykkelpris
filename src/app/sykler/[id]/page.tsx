@@ -132,7 +132,7 @@ export default async function BikeDetailPage({ params, searchParams }: PageProps
 
             {listing.discountPercent > 0 && (
               <div className="absolute left-4 top-4">
-                <span className="rounded-xl bg-accent-500 px-3 py-1.5 text-base font-bold text-white">
+                <span className="rounded-xl bg-amber-100 px-3 py-1.5 text-base font-bold text-amber-800">
                   -{listing.discountPercent}%
                 </span>
               </div>
@@ -359,7 +359,7 @@ export default async function BikeDetailPage({ params, searchParams }: PageProps
                         </td>
                         <td className="px-4 py-3 text-right">
                           {snap.discountPercent > 0 ? (
-                            <span className="rounded bg-accent-100 px-2 py-0.5 text-xs font-semibold text-accent-700">
+                            <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
                               -{snap.discountPercent}%
                             </span>
                           ) : (

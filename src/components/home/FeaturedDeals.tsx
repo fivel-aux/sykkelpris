@@ -12,7 +12,7 @@ export function FeaturedDeals({ deals }: FeaturedDealsProps) {
   if (deals.length === 0) return null;
 
   return (
-    <section className="border-t border-zinc-100 bg-white py-10">
+    <section className="border-t border-zinc-200 bg-white py-14">
       <Container>
         {/* Header row */}
         <div className="mb-6 flex items-end justify-between">

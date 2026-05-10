@@ -59,7 +59,7 @@ export function BikeListItem({ listing }: BikeListItemProps) {
           {/* Price */}
           <div className="shrink-0 text-right">
             {listing.discountPercent > 0 && (
-              <span className="mb-1 inline-block rounded bg-accent-500 px-2 py-0.5 text-xs font-bold text-white">
+              <span className="mb-1 inline-block rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
                 -{listing.discountPercent}%
               </span>
             )}

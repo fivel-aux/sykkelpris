@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { Container } from "@/components/layout/Container";
 import { SearchBar } from "@/components/ui/SearchBar";
-import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { HeroVideo } from "./HeroVideo";
 
@@ -14,7 +13,7 @@ const QUICK_LINKS = [
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-zinc-900 py-10 md:py-24">
+    <section className="relative overflow-hidden bg-zinc-900 py-16 md:py-24">
       {/* Background video — sequential playlist, falls back to bg-zinc-900 if unavailable. */}
       <HeroVideo />
 
@@ -39,12 +38,12 @@ export function HeroSection() {
       <Container className="relative">
         <div className="max-w-2xl">
           {/* Eyebrow */}
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.15em] text-accent-400">
+          <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.2em] text-accent-300">
             Sykkelsøk for Norge
           </p>
 
           {/* Heading */}
-          <h1 className="mb-5 text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl">
+          <h1 className="mb-5 text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl">
             Finn din neste sykkel
             <br />
             <span className="text-accent-400">til best pris</span>
@@ -73,10 +72,9 @@ export function HeroSection() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5 text-sm text-zinc-300 transition-colors hover:border-white/20 hover:bg-white/[0.12] hover:text-white"
+                className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5 text-sm text-zinc-300 transition-colors hover:border-white/20 hover:bg-white/[0.12] hover:text-white"
               >
                 {link.label}
-                <ArrowRight className="h-3 w-3 opacity-50" />
               </Link>
             ))}
           </div>

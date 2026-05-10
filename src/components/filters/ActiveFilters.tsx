@@ -126,10 +126,10 @@ export function ActiveFilters({ brandOptions, storeOptions }: ActiveFiltersProps
         <button
           key={chip.id}
           onClick={() => remove(chip)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-accent-200 bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-700 transition-colors hover:bg-accent-100"
+          className="inline-flex items-center gap-1.5 rounded border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50"
         >
           {chip.label}
-          <X className="h-3 w-3 text-accent-400" />
+          <X className="h-3 w-3 text-zinc-400" />
         </button>
       ))}
       {chips.length > 1 && (

@@ -105,7 +105,7 @@ export default async function SyklerPage({ searchParams }: PageProps) {
           {/* ── Results column ───────────────────────────────────────────── */}
           <div className="min-w-0 flex-1">
             {/* Toolbar */}
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               {/* Left side: mobile filter trigger + sort */}
               <div className="flex items-center gap-3">
                 <Suspense fallback={null}>
@@ -125,7 +125,7 @@ export default async function SyklerPage({ searchParams }: PageProps) {
               <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-1">
                 <Link
                   href={buildViewUrl("grid")}
-                  aria-label="4-kolonne rutenett"
+                  aria-label="3-kolonne rutenett"
                   className={clsx(
                     "rounded p-1.5 transition-colors",
                     view === "grid"
@@ -186,7 +186,7 @@ export default async function SyklerPage({ searchParams }: PageProps) {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                 {listings.map((l) => (
                   <BikeCard key={l.id} listing={l} fromUrl={fromUrl} />
                 ))}

@@ -41,7 +41,7 @@ export function MobileFilterSheet({ brands, stores, availableSizes = [] }: Mobil
         <SlidersHorizontal className="h-4 w-4 text-zinc-500" />
         Filtrer
         {activeCount > 0 && (
-          <span className="rounded-full bg-accent-500 px-1.5 py-0.5 text-xs font-bold leading-none text-white">
+          <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-xs font-medium leading-none text-white">
             {activeCount}
           </span>
         )}
@@ -64,7 +64,7 @@ export function MobileFilterSheet({ brands, stores, availableSizes = [] }: Mobil
                 <SlidersHorizontal className="h-4 w-4 text-zinc-400" />
                 Filtrer
                 {activeCount > 0 && (
-                  <span className="rounded-full bg-accent-500 px-1.5 py-0.5 text-xs font-bold leading-none text-white">
+                  <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-xs font-medium leading-none text-white">
                     {activeCount}
                   </span>
                 )}
