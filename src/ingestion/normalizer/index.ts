@@ -36,6 +36,9 @@ export interface NormalizedListing {
   /** Propagated from RawProduct.sizesConfident — false means the detail-page
    *  fetch failed and sizes/isInStock should NOT overwrite existing DB data. */
   sizesConfident: boolean;
+  /** Propagated from RawProduct.imageConfident — false means the image is only
+   *  the listing-page thumbnail and should NOT overwrite a better existing image. */
+  imageConfident: boolean;
 }
 
 /**
@@ -161,6 +164,7 @@ export function normalize(
     brand,
     sizes,
     sizesConfident: raw.sizesConfident ?? true,
+    imageConfident: raw.imageConfident ?? true,
   };
 }
 

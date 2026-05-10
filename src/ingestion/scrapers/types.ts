@@ -39,6 +39,14 @@ export interface RawProduct {
    * Defaults to true (undefined treated as true).
    */
   sizesConfident?: boolean;
+  /**
+   * Whether the image for this product came from a detail-page fetch (true)
+   * or is only the listing-page thumbnail (false).
+   * When false, the runner preserves any existing higher-quality image already
+   * stored in the DB rather than overwriting with the lower-res thumbnail.
+   * Defaults to true (undefined treated as true), so other scrapers are unaffected.
+   */
+  imageConfident?: boolean;
   /** Timestamp when this product was scraped */
   scrapedAt: Date;
 }

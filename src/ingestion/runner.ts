@@ -184,10 +184,12 @@ async function ingestStore(
         continue;
       }
 
-      // Extract sizesConfident before validation — the Zod schema doesn't include
-      // it, so it would be stripped. The runner passes it alongside the validated
-      // listing so the upsert can decide whether to refresh sizes and isInStock.
+      // Extract sizesConfident and imageConfident before validation — the Zod
+      // schema doesn't include them, so they would be stripped. The runner passes
+      // them alongside the validated listing so the upsert can decide whether to
+      // refresh sizes/isInStock and images, or preserve existing DB data.
       const sizesConfident = normalized.sizesConfident;
+      const imageConfident = normalized.imageConfident;
 
       if (!normalized.isInStock && normalized.sizes.length > 0) {
         console.log(
@@ -203,7 +205,7 @@ async function ingestStore(
       }
 
       // Step 4: Upsert
-      const isNew = await upsertListing(store.id, store.slug, validated, sizesConfident);
+      const isNew = await upsertListing(store.id, store.slug, validated, sizesConfident, imageConfident);
       if (isNew) {
         stats.newCount++;
       } else {
@@ -273,7 +275,8 @@ async function upsertListing(
   storeId: string,
   storeSlug: string,
   listing: ValidatedListing,
-  sizesConfident: boolean
+  sizesConfident: boolean,
+  imageConfident: boolean
 ): Promise<boolean> {
   const now = new Date();
 
@@ -295,6 +298,8 @@ async function upsertListing(
       isInStock: true,
       originalPrice: true,
       discountedPrice: true,
+      primaryImageUrl: true,
+      imageUrls: true,
       brands: { where: { isPrimary: true }, select: { brandId: true } },
     },
   });
@@ -363,6 +368,17 @@ async function upsertListing(
   // nothing), preserve whatever is already in the DB to avoid data corruption.
   const shouldRefreshSizes = sizesConfident && listing.sizes.length > 0;
 
+  // Image: when imageConfident is false the scraper only has the listing-page
+  // thumbnail. Preserve any better image already stored in the DB; fall back to
+  // the thumbnail only when no existing image is present (e.g. new listing).
+  const shouldRefreshImage = imageConfident;
+  const primaryImageUrl = shouldRefreshImage
+    ? listing.primaryImageUrl
+    : (existing.primaryImageUrl ?? listing.primaryImageUrl);
+  const imageUrls = shouldRefreshImage
+    ? listing.imageUrls
+    : (existing.imageUrls.length > 0 ? existing.imageUrls : listing.imageUrls);
+
   await db.bikeListing.update({
     where: { id: existing.id },
     data: {
@@ -375,8 +391,8 @@ async function upsertListing(
       originalPrice: listing.originalPrice,
       discountedPrice: listing.discountedPrice,
       discountPercent: listing.discountPercent,
-      primaryImageUrl: listing.primaryImageUrl,
-      imageUrls: listing.imageUrls,
+      primaryImageUrl,
+      imageUrls,
       description: listing.description,
       specifications: listing.specifications ?? undefined,
       isInStock: shouldRefreshSizes ? listing.isInStock : existing.isInStock,

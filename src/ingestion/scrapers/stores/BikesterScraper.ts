@@ -80,6 +80,7 @@ export class BikesterScraper extends BaseScraper {
     for (const c of candidates) {
       let imageUrl: string | null = c.imageUrl;
       let sizes: RawSize[] = [];
+      let imageConfident = false;
 
       if (detailFetches < MAX_DETAIL_FETCHES) {
         detailFetches++;
@@ -88,6 +89,7 @@ export class BikesterScraper extends BaseScraper {
 
         if (detail.imageUrl) {
           imageUrl = detail.imageUrl;
+          imageConfident = true;
           imagesUpgraded++;
         } else if (c.imageUrl) {
           imageFallbacks++;
@@ -115,6 +117,7 @@ export class BikesterScraper extends BaseScraper {
         isInStock: true,
         sizes,
         sizesConfident: false,
+        imageConfident,
         description: null,
         scrapedAt: new Date(),
       });
