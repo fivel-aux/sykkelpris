@@ -39,8 +39,9 @@ const MAX_PAGES = 25;
 
 // Caps the number of detail-page fetches per run so the total added runtime
 // stays bounded (~3 min for 200 fetches at 900 ms/fetch + network).
-// Run multiple scheduled ingestions to gradually upgrade all listings.
-const MAX_DETAIL_FETCHES = 200;
+// Override via BIKESTER_MAX_DETAIL_FETCHES env var for a one-time full upgrade.
+// Scheduled runs use the default of 200.
+const MAX_DETAIL_FETCHES = Number(process.env.BIKESTER_MAX_DETAIL_FETCHES ?? 200);
 
 // Matches product links: /no/articles/2.SUBCATID.PRODUCTID/slug
 // Category links (/no/articles/2506/slug) do NOT match — they have only one number.
