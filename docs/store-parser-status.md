@@ -150,12 +150,19 @@ The table below tracks two separate things:
   - **High-cap cleanup (`BIKESTER_MAX_DETAIL_FETCHES=1400`, 2026-05-10):** One-time cleanup run to seed best-available images across all active listings. The full Bikester candidate set (1326 products) was processed without hitting the cap. 1078 listings updated, 248 rejected by normalizer (below discount threshold or out of scope). Runtime ~44 min.
   - **Result:** Post-run audit confirmed 1078/1078 active Bikester listings on the `/zY/` CDN tier — 0 active `/mQ/` (311px) thumbnails remaining. Future standard runs (200-fetch cap) preserve the `/zY/` tier via the `imageConfident` flag — no further cleanup needed unless Bikester adds substantially more inventory.
   - **Remaining limitation:** The `/zY/` CDN tier is not uniform — URLs in this tier can be 622×508 or 800×516 depending on what the detail page returns. Some products may be source-limited on Bikester's side and will not improve beyond 622×508. This cannot be resolved from our side. The correct claim is that all active Bikester listings avoid the low-res 311px `/mQ/` thumbnail tier; not that all images are 800×516.
+- **EBIKE scope Phase 1 cleanup (commit cc9d522, 2026-05-14):**
+  - **Purpose:** Remove clearly out-of-scope e-bike families from the catalog — folding, city, commuter, trekking, and utility e-bikes that do not belong regardless of which store carries them.
+  - **Implementation:** 16 model-family keywords added to `OUT_OF_SCOPE_BIKE_KEYWORDS` in `src/ingestion/normalizer/category.ts` — not a Bikester-specific scraper hack. Patterns are globally correct and will apply to any future store selling the same families.
+  - **Patterns:** `sammenleggbar`, `district+`, `charter+`, `allant+`, `verve+`, `kemen`, `diem`, `kathmandu`, `nuride`, `compact hybrid`, `editor hybrid`, `ebig.tour`, `efloat`, `crossride`, `superior eway`, `iblox`.
+  - **Safety validation:** Simulated against 27 sport e-bike canary titles (Cube Reaction/Stereo Hybrid, Trek Rail+/Fuel+/Powerfly, Merida eBig.Nine/eOne-Sixty, Orbea Rise/Wild/Gain, Rock Machine Blizz/Torrent, Superior eXR/eXF/eXP, BH iLynx+, and others) with zero false positives before implementation.
+  - **Real ingestion result:** Active Phase 1 matches 128 → 0, active Bikester listings 1101 → 973, EBIKE 468 → 340, MTB 508 → 508, ROAD 114 → 114, GRAVEL 11 → 11. below-5%/scooters/BMX/X-road-in-ROAD all remained at 0. Runner deactivated 128 listings. ScrapeJob status: SUCCESS.
 - **QA status: In QA — not approved.** Remaining open issues:
   - ~~Image quality~~ — resolved: imageConfident preservation fix implemented and high-cap cleanup completed. Residual limitation: some `/zY/` images may be 622×508 rather than 800×516 due to source constraints on Bikester's side.
+  - ~~Decide and implement EBIKE scope~~ — Phase 1 resolved (commit cc9d522): 16 out-of-scope model families excluded via shared normalizer; active EBIKE reduced from 468 to 340.
+  - EBIKE scope Phase 2 remains: evaluate Vibe, FX+, Skeppshult, Batavus, Made, Kronan, Tenways, Tunturi, Birk E-One/E-SUV, and borderline sport-adjacent models before further exclusions.
   - Investigate whether Bikester has a dedicated gravel category URL (currently none)
   - Investigate TT/triathlon category coverage
   - Investigate sale/outlet-only coverage vs full catalog
-  - Decide and implement EBIKE scope — city/commuter/folding e-bikes currently remain in the catalog
   - Manual sampling of active listings after final coverage and scope changes
 
 ---
