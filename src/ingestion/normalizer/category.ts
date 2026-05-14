@@ -24,6 +24,36 @@ const OUT_OF_SCOPE_BIKE_KEYWORDS = [
   "commuter",    // explicit commuter bikes (e.g. Canyon Commuter:ON)
   "citylite",    // explicit city bikes (e.g. Canyon Citylite:ON)
   "bmx",         // BMX freestyle/park/dirt — not part of the sport performance catalog
+
+  // ── Out-of-scope e-bike model families ──────────────────────────────────────
+  // Discovered via Bikester EBIKE audit (2026-05-14). Each pattern is model-name
+  // specific and globally correct: these families are city/commuter/trekking
+  // regardless of which store carries them. Validated against 27 sport e-bike
+  // canary titles with zero false positives before implementation.
+  // Phase 2 candidates (Vibe, FX+, Skeppshult, Batavus, Made, etc.) are deferred
+  // pending manual decisions on borderline models.
+  "sammenleggbar",  // folding bikes (Norwegian: "foldable")
+  // Trek city/commuter lines
+  "district+",      // Trek District+ — city commuter
+  "charter+",       // Trek Charter+ — utility/urban commuter
+  "allant+",        // Trek Allant+ — commuter hybrid
+  "verve+",         // Trek Verve+ — urban/leisure
+  // Orbea city/commuter lines
+  "kemen",          // Orbea Kemen — urban commuter (all variants)
+  "diem",           // Orbea Diem — city e-bike
+  // Cube trekking/city
+  "kathmandu",      // Cube Kathmandu — trekking
+  "nuride",         // Cube Nuride — trekking allroad
+  "compact hybrid", // Cube Compact Hybrid — city/small-wheel
+  "editor hybrid",  // Cube Editor Hybrid — city
+  // Merida trekking
+  "ebig.tour",      // Merida eBig.Tour — trekking
+  "efloat",         // Merida eFloat — trekking/commuter
+  // Rock Machine trekking
+  "crossride",      // Rock Machine Crossride — trekking/hybrid
+  // Superior commuter — "superior eway" not bare "eway" (avoids matching "freeway")
+  "superior eway",  // Superior eWAY — commuter
+  "iblox",          // Superior iBLOX — trekking
 ];
 
 // ── Title-based overrides ─────────────────────────────────────────────────────
