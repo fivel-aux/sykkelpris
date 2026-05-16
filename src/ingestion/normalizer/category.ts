@@ -54,6 +54,52 @@ const OUT_OF_SCOPE_BIKE_KEYWORDS = [
   // Superior commuter — "superior eway" not bare "eway" (avoids matching "freeway")
   "superior eway",  // Superior eWAY — commuter
   "iblox",          // Superior iBLOX — trekking
+
+  // ── Out-of-scope e-bike model families — Phase 2A (2026-05-14) ──────────────
+  // Validated against 34 sport e-bike canary titles with zero false positives.
+  // All 120 DB matches were EBIKE — zero collateral across MTB/ROAD/GRAVEL.
+  // City-only brands (skeppshult, batavus, kronan, tenways, romet, proeco, frappé):
+  // entire brand catalogs are city/commuter — no sport model in any store.
+  "skeppshult",     // Skeppshult — Swedish heritage city/commuter brand (all models)
+  "batavus",        // Batavus — Dutch city/utility e-bike brand (all models)
+  "kronan",         // Kronan — Swedish city e-bike brand (all models)
+  "tenways",        // Tenways — urban commuter-only brand (all models)
+  "romet",          // Romet — Polish city/commuter e-bike brand (all models)
+  "proeco",         // Proeco — city e-bike brand
+  "frappé",         // Frappé Fuzed — city lifestyle e-bike
+  // Made city/lifestyle models — compound patterns to avoid bare "made" substring risk
+  "made alba",      // Made Alba — city e-bike
+  "made linum",     // Made Linum — city e-bike (incl. Linum Mid, Linum Plus)
+  "made salix",     // Made Salix — city e-bike
+  "made larix",     // Made Larix — city e-bike
+  "made dahlia",    // Made Dahlia — city e-bike
+  "made flow",      // Made Flow — city lifestyle e-bike
+  // Trek fitness/commuter lines
+  "fx+",            // Trek FX+ — fitness/urban hybrid (FX+ 2, FX+ 7, all variants)
+  "dual sport+",    // Trek Dual Sport+ — explicit commuter hybrid
+  // Orbea city hybrid
+  "vibe",           // Orbea Vibe — city hybrid (Vibe H10/H30/Mid; no sport bike uses this word)
+  // Merida city/trekking
+  "espresso",       // Merida eSpresso — e-trekking/commuter (eSpresso, CC, City, Espresso L)
+  // Haibike fitness/trekking lines
+  "alltrack",       // Haibike ALLTRACK — trekking (distinct from ALLTRAIL/ALLMTN which are kept)
+  "adventr",        // Haibike Adventr — fitness/adventure hybrid
+  // Kross hybrid/trekking — compound to preserve Kross MTBs (Grist Boost, Moon Boost)
+  "kross influx",   // Kross Influx — hybrid/trekking e-bike family
+  "kross le grand", // Kross Le Grand eLille — city e-bike
+  // Others
+  "mavaro",         // Cannondale Mavaro — explicit commuter (distinct from Trail Neo/Moterra)
+  "tourray",        // Raymon TourRay — trekking e-bike
+  "atome suv",      // BH Atome SUV — hybrid SUV (distinct from BH AtomX/iLynx eMTB family)
+  "e-teru",         // Ghost E-Teru — trekking/hybrid (distinct from Ghost E-ASX trail eMTB)
+  "e-one city",     // Birk E-One City — city e-bike (Birk E-One LTD deferred)
+  "e-suv",          // Birk E-SUV — utility SUV e-bike (all variants)
+  // Residual gaps patched after Phase 2A ingestion run
+  "fx +",           // Trek FX+ title variant with space before plus (e.g. "Fx + 2 Lt")
+  "linum",          // Made Linum city e-bike — catches non-adjacent "Made … Linum" title formats
+  "tunturi havu",   // Tunturi Havu — city/commuter e-bike
+  "tunturi tornio", // Tunturi Tornio — city/commuter e-bike
+  "tunturi puro",   // Tunturi Puro — city/commuter e-bike
 ];
 
 // ── Title-based overrides ─────────────────────────────────────────────────────
